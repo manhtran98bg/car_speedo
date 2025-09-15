@@ -20,7 +20,7 @@
 lv_obj_t *speedo_scr;
 static lv_obj_t *speed_meter, *speed_label, *fuel_arc;
 
-lv_meter_indicator_t *speed_indic;
+lv_meter_indicator_t *speed_indic, *speed_indic_shadow;
 
 static void draw_speed_meter()
 {
@@ -36,13 +36,14 @@ static void draw_speed_meter()
     // Add a scale
     lv_meter_scale_t *scale = lv_meter_add_scale(speed_meter);
     lv_meter_set_scale_ticks(speed_meter, scale, 161, 0, 0, PALETTE_WHITE);
-    lv_meter_set_scale_major_ticks(speed_meter, scale, 2, 1, 10, PALETTE_WHITE, -150);
+    lv_meter_set_scale_major_ticks(speed_meter, scale, 2, 1, 6, PALETTE_WHITE, -150);
     lv_meter_set_scale_range(speed_meter, scale, 0, 160, 270, 135);
 
     lv_meter_scale_t *scale_twenties = lv_meter_add_scale(speed_meter);
     lv_meter_set_scale_ticks(speed_meter, scale_twenties, 9, 0, 0, PALETTE_WHITE);
-    lv_meter_set_scale_major_ticks(speed_meter, scale_twenties, 1, 2, 15, PALETTE_WHITE, 15);
+    lv_meter_set_scale_major_ticks(speed_meter, scale_twenties, 1, 2, 12, PALETTE_WHITE, 15);
     lv_meter_set_scale_range(speed_meter, scale_twenties, 0, 160, 270, 135);
+
     // Add a WHITE OUTLINE
     lv_meter_indicator_t *outline = lv_meter_add_arc(speed_meter, scale, OUTLINE_WIDTH, PALETTE_WHITE, 2);
 
@@ -121,7 +122,7 @@ static void draw_icon(void)
     lv_obj_align(fuel_icon, LV_ALIGN_CENTER, 0, 80);
 }
 
-static void meter_anim_cb(void * indic, int32_t v)
+static void meter_anim_cb(void *indic, int32_t v)
 {
     // speed_meter là lv_obj_t* toàn cục của bạn
     lv_meter_set_indicator_value(speed_meter, (lv_meter_indicator_t *)indic, v);
@@ -129,18 +130,18 @@ static void meter_anim_cb(void * indic, int32_t v)
 
 void update_speedo_view()
 {
-    static int last_speed = 0;   // lưu giá trị cũ (ban đầu = 0)
+    static int last_speed = 0; // lưu giá trị cũ (ban đầu = 0)
 
     int new_speed = SpeedoData.speed_kmph;
 
     // --- Animate meter needle ---
     lv_anim_t a;
     lv_anim_init(&a);
-    lv_anim_set_var(&a, speed_indic);   // indicator cần update
-    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t) meter_anim_cb);
-    lv_anim_set_values(&a, last_speed, new_speed);  // từ giá trị cũ -> mới
-    lv_anim_set_time(&a, 200);     // thời gian animation (ms)
-    lv_anim_set_path_cb(&a, lv_anim_path_linear); // smooth hơn linear
+    lv_anim_set_var(&a, speed_indic); // indicator cần update
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)meter_anim_cb);
+    lv_anim_set_values(&a, last_speed, new_speed); // từ giá trị cũ -> mới
+    lv_anim_set_time(&a, 200);                     // thời gian animation (ms)
+    lv_anim_set_path_cb(&a, lv_anim_path_linear);  // smooth hơn linear
     lv_anim_start(&a);
 
     // --- Update text label ---

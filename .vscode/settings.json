@@ -17,6 +17,7 @@
         "functional": "cpp",
         "tuple": "cpp",
         "variant": "cpp",
-        "span": "c"
+        "span": "c",
+        "lv_examples.h": "c"
     }
 }

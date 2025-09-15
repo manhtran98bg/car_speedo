@@ -1,8 +1,8 @@
 #include "screen_driver.h"
-#include "TFT_eSPI.h"
+#include "Arduino.h"
 
 #define USE_DMA
-static TFT_eSPI screen = TFT_eSPI();
+TFT_eSPI screen = TFT_eSPI();
 
 #ifdef USE_DMA
 uint16_t dmaBuffer1[240 * 40]; // Toggle buffer for 16*16 MCU block, 512bytes
@@ -11,12 +11,21 @@ uint16_t *dmaBufferPtr = dmaBuffer1;
 bool dmaBufferSel = 0;
 #endif
 
+
+void display_dimming() {
+    digitalWrite(GPIO_NUM_42, LOW);
+    ledcAttach(GPIO_NUM_42, 5000, LEDC_TIMER_12_BIT);
+    ledcFade(GPIO_NUM_42, 0, 4095, 5000);
+}
+void display_off(){
+    digitalWrite(GPIO_NUM_42, LOW);
+}
 void display_init()
 {
     screen.init();
     screen.setRotation(0);
-    screen.initDMA();
-    screen.setSwapBytes(true);
+
+  
 }
 void display_flush_data(uint16_t *data, int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {

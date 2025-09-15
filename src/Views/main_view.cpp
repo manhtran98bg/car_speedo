@@ -10,12 +10,11 @@
 #include "Assets/fonts/ubuntu_200.h"
 #include "Assets/fonts/font_awesome_icons_small.h"
 
-
+#include "Drivers/screen_driver.h"
 
 // ==== Display driver ==== //
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf1[TFT_HOR_RES * 40];
-// static lv_color_t buf2[TFT_HOR_RES * 40];
 static lv_disp_drv_t disp_drv;
 
 static disp_flush display_flush_callback = nullptr;
@@ -24,72 +23,110 @@ static disp_flush display_flush_callback = nullptr;
 static hw_timer_t *lvgl_timer = nullptr;
 static portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 // ==== Private variables ==== //
-
+static lv_obj_t *dimmer;
+static bool startup_done = false;
 // ==== External variables ==== //
 extern lv_obj_t *speedo_scr;
+extern lv_obj_t *splash_scr;
 // ==== External function ==== //
 extern void make_speedo_view();
 
-
+extern void make_splash_view();
 
 // ==== Static function ==== //
 
-static void IRAM_ATTR onTimer() {
+static void IRAM_ATTR onTimer()
+{
     portENTER_CRITICAL_ISR(&timerMux);
     lv_tick_inc(1);
     portEXIT_CRITICAL_ISR(&timerMux);
 }
-static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
+static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+{
     if (display_flush_callback != nullptr)
         display_flush_callback((uint16_t *)&color_p->full, area->x1, area->y1, area->x2, area->y2);
     lv_disp_flush_ready(disp);
 }
 
-static void lvgl_timer_init() {
+static void lvgl_timer_init()
+{
     lvgl_timer = timerBegin(1000); // 1kHz = 1ms
     timerAttachInterrupt(lvgl_timer, &onTimer);
     timerAlarm(lvgl_timer, 1, true, 0);
 }
 
-lv_color_t get_state_color(struct_icon_parts obj, float value, bool is_icon) {
-  // check for -1 initialisation values and return default
-  if (value == -1) {
-    return (is_show_num || !is_icon) ? PALETTE_WHITE : PALETTE_GREY;
-  }
-  // check is passed value flags an alert
-  if (obj.flag_when == ABOVE) {
-    // Check warning first, if defined
-    if (obj.warning >= 0 && value > obj.warning) {
-        return PALETTE_RED;
+lv_color_t get_state_color(struct_icon_parts obj, float value, bool is_icon)
+{
+    // check for -1 initialisation values and return default
+    if (value == -1)
+    {
+        return (is_show_num || !is_icon) ? PALETTE_WHITE : PALETTE_GREY;
     }
-    // Check alert if defined
-    if (obj.alert >= 0 && value > obj.alert) {
-        return PALETTE_AMBER;
+    // check is passed value flags an alert
+    if (obj.flag_when == ABOVE)
+    {
+        // Check warning first, if defined
+        if (obj.warning >= 0 && value > obj.warning)
+        {
+            return PALETTE_RED;
+        }
+        // Check alert if defined
+        if (obj.alert >= 0 && value > obj.alert)
+        {
+            return PALETTE_AMBER;
+        }
     }
-  } else if (obj.flag_when == BELOW) {
-    // Check warning first, if defined
-    if (obj.warning >= 0 && value < obj.warning) {
-        return PALETTE_RED;
+    else if (obj.flag_when == BELOW)
+    {
+        // Check warning first, if defined
+        if (obj.warning >= 0 && value < obj.warning)
+        {
+            return PALETTE_RED;
+        }
+        // Check alert if defined
+        if (obj.alert >= 0 && value < obj.alert)
+        {
+            return PALETTE_AMBER;
+        }
     }
-    // Check alert if defined
-    if (obj.alert >= 0 && value < obj.alert) {
-        return PALETTE_AMBER;
-    }
-  }
 
-  // If number showing or not an icon return default white
-  if (is_show_num || !is_icon) {
-    return PALETTE_WHITE;
-  }
-  
-  // Otherwise, return grey
-  return PALETTE_GREY;
+    // If number showing or not an icon return default white
+    if (is_show_num || !is_icon)
+    {
+        return PALETTE_WHITE;
+    }
+
+    // Otherwise, return grey
+    return PALETTE_GREY;
 }
 
-static void make_ui() {
-
+static void dimmer_anim_cb(void *dimmer, int32_t v)
+{
+    lv_obj_set_style_bg_opa((lv_obj_t *)dimmer, v, 0);
+    if (v == 0)
+    {
+        lv_scr_load(speedo_scr);
+        startup_done = true;
+    }
 }
-void main_view_init() {
+void make_dimmer(void)
+{
+    dimmer = lv_layer_top();
+    lv_obj_set_size(dimmer, 240, 240);
+    lv_obj_center(dimmer);
+    lv_obj_set_style_bg_color(dimmer, PALETTE_BLACK, 0);
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, dimmer); // indicator cần update
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)dimmer_anim_cb);
+    lv_anim_set_values(&a, 255, 0);               // từ giá trị cũ -> mới
+    lv_anim_set_time(&a, 500);                    // thời gian animation (ms)
+    lv_anim_set_path_cb(&a, lv_anim_path_linear); // smooth hơn linear
+    lv_anim_start(&a);
+}
+
+void main_view_init()
+{
     lv_init();
     lv_disp_draw_buf_init(&draw_buf, buf1, NULL, TFT_HOR_RES * 40);
     lv_disp_drv_init(&disp_drv);
@@ -98,26 +135,34 @@ void main_view_init() {
     disp_drv.flush_cb = disp_flush_callback;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
-    //init timer
+    // init timer
     lvgl_timer_init();
-    //make_ui    
+    // make_ui
     make_speedo_view();
-    
-    //load default view
+    // load default view
     lv_scr_load(speedo_scr);
+    startup_done = true;
+    lv_timer_create([](lv_timer_t *t)
+                    {
+                        display_dimming();
+                        lv_timer_del(t);
+                    }, 500, NULL);
 }
-void register_display_flush_callback(disp_flush disp_flush_cb) {
+void register_display_flush_callback(disp_flush disp_flush_cb)
+{
     display_flush_callback = disp_flush_cb;
 }
-void main_view_process(){
+void main_view_process()
+{
     static size_t updateSpeedo = 0;
     static size_t getData = 0;
     lv_timer_handler();
-    if (millis() - updateSpeedo >= 200) {
+    if (millis() - updateSpeedo >= 200 && startup_done)
+    {
         updateSpeedo = millis();
-         if (SpeedoData.speed_kmph <= 160)
+        if (SpeedoData.speed_kmph <= 160)
             SpeedoData.speed_kmph = (sin(lv_tick_get() / 2000.0) + 1) * 80;
-        else 
+        else
             SpeedoData.speed_kmph = 0;
         update_speedo_view();
     }
