@@ -15,6 +15,7 @@
 // ==== Display driver ==== //
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf1[TFT_HOR_RES * 40];
+// static lv_color_t *buf1 = (lv_color_t*) heap_caps_aligned_alloc(32, (TFT_HOR_RES*TFT_VER_RES *2) / 6, MALLOC_CAP_DMA);
 static lv_disp_drv_t disp_drv;
 
 static disp_flush display_flush_callback = nullptr;
@@ -33,14 +34,11 @@ extern void make_speedo_view();
 
 extern void make_splash_view();
 
+extern void update_speed_meter();
+
 // ==== Static function ==== //
 
-static void IRAM_ATTR onTimer()
-{
-    portENTER_CRITICAL_ISR(&timerMux);
-    lv_tick_inc(1);
-    portEXIT_CRITICAL_ISR(&timerMux);
-}
+
 static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
     if (display_flush_callback != nullptr)
@@ -48,56 +46,17 @@ static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_c
     lv_disp_flush_ready(disp);
 }
 
+static void IRAM_ATTR onTimer()
+{
+    portENTER_CRITICAL_ISR(&timerMux);
+    lv_tick_inc(1);
+    portEXIT_CRITICAL_ISR(&timerMux);
+}
 static void lvgl_timer_init()
 {
-    lvgl_timer = timerBegin(1000); // 1kHz = 1ms
+    lvgl_timer = timerBegin(1000, ); // 1kHz = 1ms
     timerAttachInterrupt(lvgl_timer, &onTimer);
     timerAlarm(lvgl_timer, 1, true, 0);
-}
-
-lv_color_t get_state_color(struct_icon_parts obj, float value, bool is_icon)
-{
-    // check for -1 initialisation values and return default
-    if (value == -1)
-    {
-        return (is_show_num || !is_icon) ? PALETTE_WHITE : PALETTE_GREY;
-    }
-    // check is passed value flags an alert
-    if (obj.flag_when == ABOVE)
-    {
-        // Check warning first, if defined
-        if (obj.warning >= 0 && value > obj.warning)
-        {
-            return PALETTE_RED;
-        }
-        // Check alert if defined
-        if (obj.alert >= 0 && value > obj.alert)
-        {
-            return PALETTE_AMBER;
-        }
-    }
-    else if (obj.flag_when == BELOW)
-    {
-        // Check warning first, if defined
-        if (obj.warning >= 0 && value < obj.warning)
-        {
-            return PALETTE_RED;
-        }
-        // Check alert if defined
-        if (obj.alert >= 0 && value < obj.alert)
-        {
-            return PALETTE_AMBER;
-        }
-    }
-
-    // If number showing or not an icon return default white
-    if (is_show_num || !is_icon)
-    {
-        return PALETTE_WHITE;
-    }
-
-    // Otherwise, return grey
-    return PALETTE_GREY;
 }
 
 static void dimmer_anim_cb(void *dimmer, int32_t v)
@@ -109,22 +68,26 @@ static void dimmer_anim_cb(void *dimmer, int32_t v)
         startup_done = true;
     }
 }
-void make_dimmer(void)
-{
-    dimmer = lv_layer_top();
-    lv_obj_set_size(dimmer, 240, 240);
-    lv_obj_center(dimmer);
-    lv_obj_set_style_bg_color(dimmer, PALETTE_BLACK, 0);
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, dimmer); // indicator cần update
-    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)dimmer_anim_cb);
-    lv_anim_set_values(&a, 255, 0);               // từ giá trị cũ -> mới
-    lv_anim_set_time(&a, 500);                    // thời gian animation (ms)
-    lv_anim_set_path_cb(&a, lv_anim_path_linear); // smooth hơn linear
-    lv_anim_start(&a);
-}
 
+static void check_speed_meter_task(void *param)
+{
+    Serial.println("enter check_speed_meter_task");
+    while (SpeedoData.speed_kmph <= 160)
+    {
+        update_speed_meter();
+        SpeedoData.speed_kmph++;
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    while (SpeedoData.speed_kmph > 0)
+    {
+        update_speed_meter();
+        SpeedoData.speed_kmph--;
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    startup_done = true;
+    Serial.println("Exit check_speed_meter_task");
+    vTaskDelete(NULL);
+}
 void main_view_init()
 {
     lv_init();
@@ -136,17 +99,24 @@ void main_view_init()
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
     // init timer
-    lvgl_timer_init();
+    // lvgl_timer_init();
     // make_ui
     make_speedo_view();
     // load default view
     lv_scr_load(speedo_scr);
-    startup_done = true;
     lv_timer_create([](lv_timer_t *t)
                     {
                         display_dimming();
-                        lv_timer_del(t);
-                    }, 500, NULL);
+                        lv_timer_del(t); }, 500, NULL);
+    xTaskCreate([](void *param)
+                {
+                    while (true)
+                    {
+                        lv_timer_handler();
+                        vTaskDelay(pdMS_TO_TICKS(1));
+                    } },
+                "lvgl_loop_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(check_speed_meter_task, "check_speed_meter_task", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
 }
 void register_display_flush_callback(disp_flush disp_flush_cb)
 {
@@ -156,7 +126,6 @@ void main_view_process()
 {
     static size_t updateSpeedo = 0;
     static size_t getData = 0;
-    lv_timer_handler();
     if (millis() - updateSpeedo >= 200 && startup_done)
     {
         updateSpeedo = millis();
@@ -164,6 +133,6 @@ void main_view_process()
             SpeedoData.speed_kmph = (sin(lv_tick_get() / 2000.0) + 1) * 80;
         else
             SpeedoData.speed_kmph = 0;
-        update_speedo_view();
+        update_speed_meter();
     }
 }

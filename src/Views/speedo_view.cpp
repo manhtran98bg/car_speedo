@@ -127,7 +127,9 @@ static void meter_anim_cb(void *indic, int32_t v)
     // speed_meter là lv_obj_t* toàn cục của bạn
     lv_meter_set_indicator_value(speed_meter, (lv_meter_indicator_t *)indic, v);
 }
-
+void update_speed_meter() {
+    lv_meter_set_indicator_value(speed_meter, speed_indic, SpeedoData.speed_kmph);
+}
 void update_speedo_view()
 {
     static int last_speed = 0; // lưu giá trị cũ (ban đầu = 0)

@@ -13,20 +13,20 @@ void setup()
   Serial.begin(115200);
   Serial.println("Main app running");
   display_init();
-  gif.begin(BIG_ENDIAN_PIXELS);
-  if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
-  {
-    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
-    screen.startWrite();
-    while (gif.playFrame(true, NULL))
-    {
-      yield();
-    }
-    gif.close();
-    screen.endWrite();
-  }
-  screen.fillScreen(TFT_BLACK);
-  delay(100);
+  // gif.begin(BIG_ENDIAN_PIXELS);
+  // if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
+  // {
+  //   Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
+  //   screen.startWrite();
+  //   while (gif.playFrame(true, NULL))
+  //   {
+  //     yield();
+  //   }
+  //   gif.close();
+  //   screen.endWrite();
+  // }
+  // screen.fillScreen(TFT_BLACK);
+  // delay(100);
   screen.initDMA();
   screen.setSwapBytes(true);
   register_display_flush_callback(display_flush_data);
@@ -36,5 +36,5 @@ void setup()
 
 void loop()
 {
-  main_view_process();
+  // main_view_process();
 }
