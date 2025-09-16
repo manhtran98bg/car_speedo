@@ -1,6 +1,5 @@
 // GIFDraw is called by AnimatedGIF library frame to screen
 #include <Arduino.h>
-#include <TFT_eSPI.h>       // Hardware-specific library
 #include <AnimatedGIF.h>   // GIF decoder library
 #include "Drivers/screen_driver.h" // TFT_eSPI instance
 
@@ -70,8 +69,8 @@ void GIFDraw(GIFDRAW *pDraw)
       if (iCount) // any opaque pixels?
       {
         // DMA would degrtade performance here due to short line segments
-        screen.setAddrWindow(pDraw->iX + x, y, iCount, 1);
-        screen.pushPixels(usTemp, iCount);
+        // screen.setAddrWindow(pDraw->iX + x, y, iCount, 1);
+        // screen.pushPixels(usTemp, iCount);
         x += iCount;
         iCount = 0;
       }
@@ -99,9 +98,9 @@ void GIFDraw(GIFDRAW *pDraw)
       for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
 
 #ifdef USE_DMA // 71.6 fps (ST7796 84.5 fps)
-    screen.dmaWait();
-    screen.setAddrWindow(pDraw->iX, y, iWidth, 1);
-    screen.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
+    // screen.dmaWait();
+    // screen.setAddrWindow(pDraw->iX, y, iWidth, 1);
+    // screen.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
     dmaBuf = !dmaBuf;
 #else // 57.0 fps
     screen.setAddrWindow(pDraw->iX, y, iWidth, 1);
@@ -119,8 +118,8 @@ void GIFDraw(GIFDRAW *pDraw)
         for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
 
 #ifdef USE_DMA
-      screen.dmaWait();
-      screen.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
+      // screen.dmaWait();
+      // screen.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
       dmaBuf = !dmaBuf;
 #else
       screen.pushPixels(&usTemp[0][0], iCount);

@@ -7,7 +7,36 @@
 // TFT config
 #define TFT_HOR_RES 240
 #define TFT_VER_RES 240
-#define TFT_ROTATION LV_DISPLAY_ROTATION_0
+#define TFT_ROTATION 0
+
+
+#define LCD_DC 18
+#define LCD_SDA 10
+#define LCD_SCLK 3
+#define LCD_CS 2
+#define LCD_RST 21
+#define LCD_WIDTH 240
+#define LCD_HEIGHT 240
+
+#define LCD_BL 42
+
+// IIC
+#define IIC_SDA 8
+#define IIC_SCL 9
+
+// TOUCH
+#define TP_INT 11
+#define TP_RST 0
+
+// Battery Voltage ADC
+#define BATTERY_VOLTAGE_ADC_DATA 4
+
+// SD
+#define SD_CS 38
+#define SD_MOSI 39
+#define SD_MISO 40
+#define SD_SCLK 41
+
 
 // Color palette (constexpr để tránh multiple definition)
 constexpr lv_color_t PALETTE_BLACK     = LV_COLOR_MAKE(0, 0, 0);

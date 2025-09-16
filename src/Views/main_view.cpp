@@ -12,6 +12,8 @@
 
 #include "Drivers/screen_driver.h"
 
+#include "ui.h"
+
 // ==== Display driver ==== //
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf1[TFT_HOR_RES * 40];
@@ -46,18 +48,6 @@ static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_c
     lv_disp_flush_ready(disp);
 }
 
-static void IRAM_ATTR onTimer()
-{
-    portENTER_CRITICAL_ISR(&timerMux);
-    lv_tick_inc(1);
-    portEXIT_CRITICAL_ISR(&timerMux);
-}
-static void lvgl_timer_init()
-{
-    lvgl_timer = timerBegin(1000, ); // 1kHz = 1ms
-    timerAttachInterrupt(lvgl_timer, &onTimer);
-    timerAlarm(lvgl_timer, 1, true, 0);
-}
 
 static void dimmer_anim_cb(void *dimmer, int32_t v)
 {
@@ -98,25 +88,24 @@ void main_view_init()
     disp_drv.flush_cb = disp_flush_callback;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
-    // init timer
-    // lvgl_timer_init();
     // make_ui
-    make_speedo_view();
+    ui_init();
+    // make_speedo_view();
     // load default view
-    lv_scr_load(speedo_scr);
-    lv_timer_create([](lv_timer_t *t)
-                    {
-                        display_dimming();
-                        lv_timer_del(t); }, 500, NULL);
-    xTaskCreate([](void *param)
-                {
-                    while (true)
-                    {
-                        lv_timer_handler();
-                        vTaskDelay(pdMS_TO_TICKS(1));
-                    } },
-                "lvgl_loop_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
-    xTaskCreate(check_speed_meter_task, "check_speed_meter_task", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
+    // lv_scr_load(speedo_scr);
+    // lv_timer_create([](lv_timer_t *t)
+    //                 {
+    //                     display_dimming();
+    //                     lv_timer_del(t); }, 500, NULL);
+    // xTaskCreate([](void *param)
+    //             {
+    //                 while (true)
+    //                 {
+    //                     lv_timer_handler();
+    //                     vTaskDelay(pdMS_TO_TICKS(1));
+    //                 } },
+    //             "lvgl_loop_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
+    // xTaskCreate(check_speed_meter_task, "check_speed_meter_task", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
 }
 void register_display_flush_callback(disp_flush disp_flush_cb)
 {
@@ -126,13 +115,14 @@ void main_view_process()
 {
     static size_t updateSpeedo = 0;
     static size_t getData = 0;
-    if (millis() - updateSpeedo >= 200 && startup_done)
-    {
-        updateSpeedo = millis();
-        if (SpeedoData.speed_kmph <= 160)
-            SpeedoData.speed_kmph = (sin(lv_tick_get() / 2000.0) + 1) * 80;
-        else
-            SpeedoData.speed_kmph = 0;
-        update_speed_meter();
-    }
+    lv_timer_handler();
+    // if (millis() - updateSpeedo >= 200 && startup_done)
+    // {
+    //     updateSpeedo = millis();
+    //     if (SpeedoData.speed_kmph <= 160)
+    //         SpeedoData.speed_kmph = (sin(lv_tick_get() / 2000.0) + 1) * 80;
+    //     else
+    //         SpeedoData.speed_kmph = 0;
+    //     update_speed_meter();
+    // }
 }

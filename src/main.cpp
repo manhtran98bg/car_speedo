@@ -27,14 +27,13 @@ void setup()
   // }
   // screen.fillScreen(TFT_BLACK);
   // delay(100);
-  screen.initDMA();
-  screen.setSwapBytes(true);
   register_display_flush_callback(display_flush_data);
-  display_off();
   main_view_init();
 }
 
 void loop()
 {
-  // main_view_process();
+  Serial.println("check");
+  main_view_process();
+  delay(5);
 }
