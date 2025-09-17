@@ -3,7 +3,9 @@
 // LVGL version: 8.3.11
 // Project name: my_speedo
 
+#include "Arduino.h"
 #include "ui_helpers.h"
+
 
 void _ui_bar_set_property(lv_obj_t * target, int id, int val)
 {

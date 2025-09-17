@@ -39,6 +39,7 @@ static void meter_anim_cb(void *needle, int32_t v)
     int arc_value = map(v, 0, 10000, 0, 93);
     lv_img_set_angle(ui_img_needle, needle_angle);
     lv_arc_set_value(ui_Arc_rpm, arc_value);
+    
 }
 static void update_ui()
 {
@@ -87,7 +88,7 @@ void main_view_init()
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
     ui_init();
-    needle_Animation(uic_img_needle, 500);
+    needle_Animation(uic_img_needle, 200);
     lv_timer_create([](lv_timer_t *t)
                     {
                         display_fadeIn();

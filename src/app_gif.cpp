@@ -4,7 +4,8 @@
 #include "Drivers/screen_driver.h" // TFT_eSPI instance
 #include "Assets/splash_honda.h"
 #include "user_config.h"
-
+#include "SPIFFS.h"
+#include "FS.h"
 #define DISPLAY_WIDTH TFT_HOR_RES
 #define DISPLAY_HEIGHT TFT_VER_RES
 #define BUFFER_SIZE 256 // Optimum is >= GIF width or integral division of width
@@ -14,6 +15,51 @@ static uint16_t usTemp[2][BUFFER_SIZE]; // Double buffer
 static bool dmaBuf = 0;
 static AnimatedGIF gif;
 
+File f;
+
+void *GIFOpenFile(const char *fname, int32_t *pSize)
+{
+  f = SPIFFS.open(fname);
+  if (f)
+  {
+    *pSize = f.size();
+    return (void *)&f;
+  }
+  return NULL;
+} /* GIFOpenFile() */
+
+void GIFCloseFile(void *pHandle)
+{
+  File *f = static_cast<File *>(pHandle);
+  if (f != NULL)
+    f->close();
+} /* GIFCloseFile() */
+
+int32_t GIFReadFile(GIFFILE *pFile, uint8_t *pBuf, int32_t iLen)
+{
+  int32_t iBytesRead;
+  iBytesRead = iLen;
+  File *f = static_cast<File *>(pFile->fHandle);
+  // Note: If you read a file all the way to the last byte, seek() stops working
+  if ((pFile->iSize - pFile->iPos) < iLen)
+    iBytesRead = pFile->iSize - pFile->iPos - 1; // <-- ugly work-around
+  if (iBytesRead <= 0)
+    return 0;
+  iBytesRead = (int32_t)f->read(pBuf, iBytesRead);
+  pFile->iPos = f->position();
+  return iBytesRead;
+} /* GIFReadFile() */
+
+int32_t GIFSeekFile(GIFFILE *pFile, int32_t iPosition)
+{
+  int i = micros();
+  File *f = static_cast<File *>(pFile->fHandle);
+  f->seek(iPosition);
+  pFile->iPos = (int32_t)f->position();
+  i = micros() - i;
+  //  Serial.printf("Seek time = %d us\n", i);
+  return pFile->iPos;
+}
 static void GIFDraw(GIFDRAW *pDraw)
 {
   uint8_t *s;
@@ -117,10 +163,18 @@ static void GIFDraw(GIFDRAW *pDraw)
 }
 void gif_splash_view_init()
 {
-  gif.begin(LITTLE_ENDIAN_PIXELS);
-  if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
+  if (!SPIFFS.begin(true))
   {
-    // Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
+    // true = format nếu mount thất bại
+    Serial.println("SPIFFS Mount Failed");
+    return;
+  }
+  gif.begin(LITTLE_ENDIAN_PIXELS);
+  // if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
+  if (gif.open("/splash240p.gif", GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))
+  {
+    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
+
     while (gif.playFrame(true, NULL))
     {
       yield();

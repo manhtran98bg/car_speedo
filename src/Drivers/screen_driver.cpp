@@ -40,10 +40,12 @@ void display_init()
     Serial.println("Initializing Display...");
     ledcSetup(LEDC_CHANNEL, LEDC_FREQ, LEDC_TIMER_RES);
     ledcAttachPin(LEDC_PIN, LEDC_CHANNEL);
-    display_on();
+    display_off();
     screen->begin();
     screen->fillScreen(BLACK);
     screen->setRotation(TFT_ROTATION);
+    delay(100);
+    display_on();
 }
 void display_flush_data(uint16_t *data, int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
