@@ -1,3 +1,3 @@
 #include "data_model.h"
 
-Speedo SpeedoData   = {0, 0, 0, 0};
+Speedo SpeedoData   = {0};

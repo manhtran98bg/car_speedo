@@ -6,9 +6,9 @@
 
 struct Speedo {
     uint8_t flag;
-    uint8_t speed_mph;
-    uint8_t speed_kmph;
-    int8_t fuel_perc;
+    int speed_kmph;
+    uint16_t rpm;
+    int engine_temp;
 };
 
 // ==== Global Instances ==== //

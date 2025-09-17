@@ -96,7 +96,7 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_x(ui_lbl_rpm_value, 59);
     lv_obj_set_y(ui_lbl_rpm_value, 44);
     lv_obj_set_align(ui_lbl_rpm_value, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_lbl_rpm_value, "160");
+    lv_label_set_text(ui_lbl_rpm_value, "---");
     lv_obj_set_style_text_color(ui_lbl_rpm_value, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_lbl_rpm_value, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_lbl_rpm_value, LV_TEXT_ALIGN_AUTO, LV_PART_MAIN | LV_STATE_DEFAULT);
