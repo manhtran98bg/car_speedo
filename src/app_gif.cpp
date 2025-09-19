@@ -163,12 +163,6 @@ static void GIFDraw(GIFDRAW *pDraw)
 }
 void gif_splash_view_init()
 {
-  if (!SPIFFS.begin(true))
-  {
-    // true = format nếu mount thất bại
-    Serial.println("SPIFFS Mount Failed");
-    return;
-  }
   gif.begin(LITTLE_ENDIAN_PIXELS);
   // if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
   if (gif.open("/splash240p.gif", GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))

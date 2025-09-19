@@ -3,7 +3,7 @@
 
 #include "lvgl.h"
 #include <stdio.h>
-
+#include "driver/i2s.h"
 // TFT config
 #define TFT_HOR_RES 240
 #define TFT_VER_RES 240
@@ -38,6 +38,19 @@
 #define SD_SCLK 41
 
 
+#define FPS 30
+#define MJPEG_BUFFER_SIZE (240 * 240 * 2 / 8)
+#define AUDIOASSIGNCORE 1
+#define DECODEASSIGNCORE 0
+#define DRAWASSIGNCORE 1
+
+// Audio
+
+#define I2S_DIN 7
+#define I2S_WS  4
+#define I2S_BCLK 5
+#define I2S_PORT   I2S_NUM_0
+#define SAMPLE_RATE 44100
 // Color palette (constexpr để tránh multiple definition)
 constexpr lv_color_t PALETTE_BLACK     = LV_COLOR_MAKE(0, 0, 0);
 constexpr lv_color_t PALETTE_WHITE     = LV_COLOR_MAKE(255, 255, 255);
