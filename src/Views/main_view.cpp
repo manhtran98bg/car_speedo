@@ -74,6 +74,7 @@ static void updateData_task(void *param)
             SpeedoData.rpm = SpeedoData.speed_kmph * 100;
             update_ui();
         }
+        Serial.println("update ui");
         vTaskDelay(200);
     }
 }

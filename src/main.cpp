@@ -39,26 +39,26 @@ void setup()
   Serial.print("ESP-IDF Version: ");
   Serial.println(esp_get_idf_version());
   // test spiffs
-  fs_init();
+  // fs_init();
   // audio.setPinout(I2S_BCLK, I2S_WS, I2S_DIN);
   // audio.setVolume(10); // 0...21
-  // display_init();
+  display_init();
   // gif_splash_view_init();
-  // main_view_init();
-  app_audio_init();
-  aFile = SPIFFS.open("/music.mp3");
-  if (!aFile || aFile.isDirectory())
-  {
-    Serial.println("ERROR: Failed to open file for reading\n");
-    return;
-  }
-  Serial.println("Start play audio task");
-  BaseType_t ret = app_audio_start_mp3_player(&aFile, AUDIOASSIGNCORE);
-  if (ret != pdPASS)
-  {
-    Serial.printf("Audio player task start failed: %d\n", ret);
-    return;
-  }
+  main_view_init();
+  // app_audio_init();
+  // aFile = SPIFFS.open("/music.mp3");
+  // if (!aFile || aFile.isDirectory())
+  // {
+  //   Serial.println("ERROR: Failed to open file for reading\n");
+  //   return;
+  // }
+  // Serial.println("Start play audio task");
+  // BaseType_t ret = app_audio_start_mp3_player(&aFile, AUDIOASSIGNCORE);
+  // if (ret != pdPASS)
+  // {
+  //   Serial.printf("Audio player task start failed: %d\n", ret);
+  //   return;
+  // }
   // audio.connecttoFS(SPIFFS, "/music.mp3");
 }
 
