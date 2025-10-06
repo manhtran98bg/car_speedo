@@ -162,10 +162,7 @@ static void GIFDraw(GIFDRAW *pDraw)
   }
 }
 const char* files[] = {
-  "/0.gif",
-  "/1.gif",
-  "/2.gif",
-  "/3.gif"
+  "/5.gif"
 };
 
 const size_t FILE_COUNT = sizeof(files) / sizeof(files[0]);
