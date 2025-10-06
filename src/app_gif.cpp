@@ -161,11 +161,24 @@ static void GIFDraw(GIFDRAW *pDraw)
     }
   }
 }
+const char* files[] = {
+  "/0.gif",
+  "/1.gif",
+  "/2.gif",
+  "/3.gif"
+};
+
+const size_t FILE_COUNT = sizeof(files) / sizeof(files[0]);
+
 void gif_splash_view_init()
 {
   gif.begin(LITTLE_ENDIAN_PIXELS);
   // if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
-  if (gif.open("/splash240p.gif", GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))
+  size_t idx = (size_t)(esp_random() % FILE_COUNT);
+  const char* chosenPathA = files[idx];
+  if (chosenPathA == NULL)
+    return;
+  if (gif.open(chosenPathA, GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))
   {
     Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
 

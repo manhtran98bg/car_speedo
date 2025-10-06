@@ -39,12 +39,11 @@ void setup()
   Serial.print("ESP-IDF Version: ");
   Serial.println(esp_get_idf_version());
   // test spiffs
-  // fs_init();
+  fs_init();
   // audio.setPinout(I2S_BCLK, I2S_WS, I2S_DIN);
   // audio.setVolume(10); // 0...21
   display_init();
-  // gif_splash_view_init();
-  main_view_init();
+  // main_view_init();
   // app_audio_init();
   // aFile = SPIFFS.open("/music.mp3");
   // if (!aFile || aFile.isDirectory())
@@ -60,9 +59,31 @@ void setup()
   //   return;
   // }
   // audio.connecttoFS(SPIFFS, "/music.mp3");
+
+  // test sdcard
+  // int attempts = 0;
+  // int maxAttempts = 50;
+  // int delayBetweenAttempts = 300;
+  // bool isblinked = false;
+  // pinMode(GPIO_NUM_40, OUTPUT);
+  // SPI.begin(GPIO_NUM_41, GPIO_NUM_48, GPIO_NUM_47, GPIO_NUM_40);
+  // while (!SD.begin(GPIO_NUM_40, SPI))
+  // {
+  //   Serial.printf("SD Card mount failed! (attempt %d of %d)\r\n", attempts, maxAttempts);
+  //   isblinked = !isblinked;
+  //   attempts++;
+  //   if (attempts > maxAttempts)
+  //   {
+  //     Serial.println("Giving up");
+  //   }
+  //   delay(delayBetweenAttempts);
+  // }
+  // Serial.println("Card type " + SD.cardType());
+  // Serial.println("Card size " + SD.cardSize());
 }
 
 void loop()
 {
   // audio.loop();
+  gif_splash_view_init();
 }
