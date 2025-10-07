@@ -1,7 +1,7 @@
 #include "mjpeg_player.h"
 
 #define READ_BUFFER_SIZE 1024
-#define MJPEG_BUFFER_SIZE (240 * 240 * 60) // ~14KB
+#define MJPEG_BUFFER_SIZE (240 * 240 * 60)
 
 MjpegPlayer::MjpegPlayer(JPEG_DRAW_CALLBACK *pfnDraw,
                          bool useBigEndian,
@@ -62,6 +62,7 @@ void MjpegPlayer::_taskEntry(void *param)
 void MjpegPlayer::_taskLoop()
 {
     mjpeg_msg_t msg;
+    static char buf[64];
     while (true)
     {
         if (xQueueReceive(_queue, &msg, portMAX_DELAY))
@@ -75,19 +76,22 @@ void MjpegPlayer::_taskLoop()
                     continue;
                 }
                 Serial.printf("[MJPEG] ▶️ Playing: %s\n", msg.filePath.c_str());
-
+                memset(buf, 0, sizeof(buf));
+                strncpy(buf, msg.filePath.c_str(), sizeof(buf) - 1);
+                buf[sizeof(buf) - 1] = '\0';
                 _stopRequested = false;
                 _input = &file;
                 _inputindex = 0;
-
-                while (file.available() && !_stopRequested)
+                while (_input->available() && !_stopRequested)
                 {
                     if (_readMjpegBuf())
                         _drawJpg();
-                    yield(); // tránh WDT
+                    vTaskDelay(pdMS_TO_TICKS(5));
                 }
 
                 file.close();
+                if (_onPlayDone)
+                    _onPlayDone(buf);
                 Serial.println("[MJPEG] ⏹️ Playback done");
             }
             else if (msg.cmd == MJPEG_CMD_STOP)

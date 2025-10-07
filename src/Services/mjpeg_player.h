@@ -32,8 +32,14 @@ public:
     void begin(BaseType_t core = 1);
     void playFile(const char *path);
     void stop();
+    void setOnPlayDoneCallback(std::function<void(const char* file)> cb)
+    {
+        _onPlayDone = cb;
+    }
+
 
 private:
+    std::function<void(const char* file)> _onPlayDone;
     static void _taskEntry(void *param);
     void _taskLoop();
 

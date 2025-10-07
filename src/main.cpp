@@ -13,15 +13,17 @@
 #include "user_config.h"
 #include "Audio.h"
 #include "Views/gif_view.h"
-#include "Services/audio_service.h"
+#include "Services/audio_player.h"
 #include "Services/mjpeg_player.h"
 
 /*mjpeg & SD Card*/
 #define MJPEG_FILENAME "/video/splash.mjpeg"
-MjpegPlayer *video_player;
 
-extern void app_audio_init(void);
-extern BaseType_t app_audio_start_mp3_player(Stream *input, BaseType_t audioAssignCore);
+static const char *splash_video_file = "/video/splash.mjpeg";
+static const char *splash_audio_file = "/sound/start_1.mp3";
+MjpegPlayer *video_player;
+AudioPlayer *audio_player;
+
 // Audio audio;
 
 static int displayBack(JPEGDRAW *pDraw)
@@ -38,15 +40,20 @@ static void fs_init()
     return;
   }
 }
-File aFile;
+
 static long lastCmd = 0;
 
-static void testMjpeg()
+void onVideoPlayDone(const char * file)
 {
-  video_player = new MjpegPlayer(displayBack, true, 0, 0, 240, 240);
-  video_player->begin(1); // chạy trên core 1
-  video_player->playFile("/video/splash.mjpeg");
+  Serial.printf("Done playing %s\n", file);
+  if (strcasecmp(file, splash_video_file)  == 0) {
+    main_view_init();
+    audio_player->playFile("/sound/1.mp3");
+    gif_request_show("/gif/8.gif");
+  }
+    
 }
+
 void setup()
 {
   delay(2000);
@@ -59,15 +66,17 @@ void setup()
   // ESP-IDF Version
   Serial.print("ESP-IDF Version: ");
   Serial.println(esp_get_idf_version());
-  // test spiffs
   fs_init();
-  audio_service_init();
   display_init();
 
-  audio_play_file("/sound/start_1.mp3");
-  testMjpeg();
-  main_view_init();
-  gif_request_show("/gif/8.gif");
+  video_player = new MjpegPlayer(displayBack, true, 0, 0, 240, 240);
+  video_player->begin(1);
+  video_player->setOnPlayDoneCallback(onVideoPlayDone);
+  audio_player = new AudioPlayer();
+  audio_player->begin(0);
+
+  video_player->playFile("/video/splash.mjpeg");
+  audio_player->playFile("/sound/start_1.mp3");
 }
 
 void loop()
