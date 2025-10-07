@@ -1,11 +1,15 @@
-// GIFDraw is called by AnimatedGIF library frame to screen
+
+
 #include <Arduino.h>
-#include <AnimatedGIF.h>           // GIF decoder library
-#include "Drivers/screen_driver.h" // TFT_eSPI instance
-#include "Assets/splash_honda.h"
+#include <AnimatedGIF.h>  
+#include <vector>
+#include "LittleFS.h"
+#include "ui.h"
+
+#include "Drivers/screen_driver.h" 
 #include "user_config.h"
-#include "SPIFFS.h"
-#include "FS.h"
+#include "gif_view.h"
+
 #define DISPLAY_WIDTH TFT_HOR_RES
 #define DISPLAY_HEIGHT TFT_VER_RES
 #define BUFFER_SIZE 256 // Optimum is >= GIF width or integral division of width
@@ -14,12 +18,14 @@
 static uint16_t usTemp[2][BUFFER_SIZE]; // Double buffer
 static bool dmaBuf = 0;
 static AnimatedGIF gif;
+static std::vector<String> gifFiles;
+static QueueHandle_t gifQueue = nullptr;
 
 File f;
 
-void *GIFOpenFile(const char *fname, int32_t *pSize)
+static void *GIFOpenFile(const char *fname, int32_t *pSize)
 {
-  f = SPIFFS.open(fname);
+  f = LittleFS.open(fname);
   if (f)
   {
     *pSize = f.size();
@@ -28,14 +34,14 @@ void *GIFOpenFile(const char *fname, int32_t *pSize)
   return NULL;
 } /* GIFOpenFile() */
 
-void GIFCloseFile(void *pHandle)
+static void GIFCloseFile(void *pHandle)
 {
   File *f = static_cast<File *>(pHandle);
   if (f != NULL)
     f->close();
 } /* GIFCloseFile() */
 
-int32_t GIFReadFile(GIFFILE *pFile, uint8_t *pBuf, int32_t iLen)
+static int32_t GIFReadFile(GIFFILE *pFile, uint8_t *pBuf, int32_t iLen)
 {
   int32_t iBytesRead;
   iBytesRead = iLen;
@@ -50,7 +56,7 @@ int32_t GIFReadFile(GIFFILE *pFile, uint8_t *pBuf, int32_t iLen)
   return iBytesRead;
 } /* GIFReadFile() */
 
-int32_t GIFSeekFile(GIFFILE *pFile, int32_t iPosition)
+static int32_t GIFSeekFile(GIFFILE *pFile, int32_t iPosition)
 {
   int i = micros();
   File *f = static_cast<File *>(pFile->fHandle);
@@ -60,6 +66,7 @@ int32_t GIFSeekFile(GIFFILE *pFile, int32_t iPosition)
   //  Serial.printf("Seek time = %d us\n", i);
   return pFile->iPos;
 }
+
 static void GIFDraw(GIFDRAW *pDraw)
 {
   uint8_t *s;
@@ -161,28 +168,101 @@ static void GIFDraw(GIFDRAW *pDraw)
     }
   }
 }
-const char* files[] = {
-  "/5.gif"
-};
 
-const size_t FILE_COUNT = sizeof(files) / sizeof(files[0]);
-
-void gif_splash_view_init()
+static void scan_gif_files()
 {
-  gif.begin(LITTLE_ENDIAN_PIXELS);
-  // if (gif.open((uint8_t *)splash_honda, sizeof(splash_honda), GIFDraw))
-  size_t idx = (size_t)(esp_random() % FILE_COUNT);
-  const char* chosenPathA = files[idx];
-  if (chosenPathA == NULL)
-    return;
-  if (gif.open(chosenPathA, GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))
-  {
-    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
+  gifFiles.clear();
 
-    while (gif.playFrame(true, NULL))
+  if (!LittleFS.begin(false))
+  {
+    Serial.println("❌ LittleFS not mounted!");
+    return;
+  }
+
+  if (!LittleFS.exists("/gif"))
+  {
+    Serial.println("❌ Folder /gif/ not found!");
+    return;
+  }
+
+  File root = LittleFS.open("/gif");
+  if (!root || !root.isDirectory())
+  {
+    Serial.println("❌ Cannot open /gif/ or not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  while (file)
+  {
+    String path = file.name(); // Đã có dạng đầy đủ: "/gif/xxx.gif"
+    if (!file.isDirectory())
     {
-      yield();
+      if (path.endsWith(".gif") || path.endsWith(".GIF"))
+      {
+        gifFiles.push_back(path);
+        Serial.printf("📁 Found GIF: %s\n", path.c_str());
+      }
     }
+    file = root.openNextFile();
+  }
+
+  Serial.printf("✅ Total GIF files found: %d\n", gifFiles.size());
+}
+
+static void show_gif(const char *path)
+{
+  lv_obj_add_flag(lv_scr_act(), LV_OBJ_FLAG_HIDDEN);
+  if (gif.open(path, GIFOpenFile, GIFCloseFile, GIFReadFile, GIFSeekFile, GIFDraw))
+  {
+    while (gif.playFrame(true, NULL))
+      yield();
     gif.close();
   }
+  lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_HIDDEN);
+}
+
+void gif_task(void *pvParameters)
+{
+  gif.begin(LITTLE_ENDIAN_PIXELS);
+  if (gifFiles.empty())
+    scan_gif_files();
+  char filename[64];
+
+  while (true)
+  {
+    if (xQueueReceive(gifQueue, &filename, portMAX_DELAY) == pdPASS)
+    {
+      currentMode = UI_MODE_GIF;
+      if (xSemaphoreTake(displayMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+      {
+        screen->fillScreen(BLACK);
+        Serial.printf("Playing GIF: %s\n", filename);
+        show_gif(filename);
+        xSemaphoreGive(displayMutex);
+      }
+
+      currentMode = UI_MODE_ODO;
+    }
+  }
+}
+
+void gif_view_init()
+{
+  gif.begin(LITTLE_ENDIAN_PIXELS);
+  if (gifFiles.empty())
+  {
+    scan_gif_files();
+  }
+  gifQueue = xQueueCreate(5, sizeof(char[64]));
+  xTaskCreatePinnedToCore(gif_task, "gif_task", 8192, NULL, configMAX_PRIORITIES, NULL, 1);
+}
+
+void gif_request_show(const char *filename)
+{
+  if (gifQueue == nullptr)
+    return;
+  char name[64];
+  strncpy(name, filename, sizeof(name) - 1);
+  xQueueSend(gifQueue, &name, 0);
 }

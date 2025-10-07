@@ -72,6 +72,11 @@ typedef struct struct_icon_parts {
     char unit[4];
 } struct_icon_parts;
 
+enum UiMode {
+  UI_MODE_ODO,
+  UI_MODE_GIF
+};
+
 // Data from the buttons
 typedef struct struct_buttons {
     uint8_t flag;
@@ -146,5 +151,6 @@ extern bool DO_SPLASH;
 extern bool is_track_mode;
 extern bool is_show_num;
 extern uint8_t dimmer_lv;
-
+extern SemaphoreHandle_t displayMutex;
+extern volatile UiMode currentMode;
 #endif // _USER_CONFIG_H_

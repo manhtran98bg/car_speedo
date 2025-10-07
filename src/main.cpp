@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "FreeRTOS.h"
 #include "Views/main_view.h"
 #include "Drivers/screen_driver.h"
 #include "Arduino_DriveBus_Library.h"
@@ -6,26 +7,46 @@
 #include "SD.h"
 
 #include "FS.h"
-#include "SPIFFS.h"
+// #include "SPIFFS.h"
+#include <LittleFS.h>
+
 #include "user_config.h"
-
 #include "Audio.h"
+#include "Views/gif_view.h"
+#include "Services/audio_service.h"
+#include "Services/mjpeg_player.h"
 
-extern void gif_splash_view_init();
+/*mjpeg & SD Card*/
+#define MJPEG_FILENAME "/video/splash.mjpeg"
+MjpegPlayer *video_player;
+
 extern void app_audio_init(void);
 extern BaseType_t app_audio_start_mp3_player(Stream *input, BaseType_t audioAssignCore);
-
 // Audio audio;
+
+static int displayBack(JPEGDRAW *pDraw)
+{
+  screen->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+  return 1;
+}
 
 static void fs_init()
 {
-  if (!SPIFFS.begin(true))
+  if (!LittleFS.begin(true))
   {
-    Serial.println("SPIFFS Mount Failed");
+    Serial.println("LittleFS Mount Failed");
     return;
   }
 }
 File aFile;
+static long lastCmd = 0;
+
+static void testMjpeg()
+{
+  video_player = new MjpegPlayer(displayBack, true, 0, 0, 240, 240);
+  video_player->begin(1); // chạy trên core 1
+  video_player->playFile("/video/splash.mjpeg");
+}
 void setup()
 {
   delay(2000);
@@ -40,50 +61,25 @@ void setup()
   Serial.println(esp_get_idf_version());
   // test spiffs
   fs_init();
-  // audio.setPinout(I2S_BCLK, I2S_WS, I2S_DIN);
-  // audio.setVolume(10); // 0...21
+  audio_service_init();
   display_init();
-  // main_view_init();
-  // app_audio_init();
-  // aFile = SPIFFS.open("/music.mp3");
-  // if (!aFile || aFile.isDirectory())
-  // {
-  //   Serial.println("ERROR: Failed to open file for reading\n");
-  //   return;
-  // }
-  // Serial.println("Start play audio task");
-  // BaseType_t ret = app_audio_start_mp3_player(&aFile, AUDIOASSIGNCORE);
-  // if (ret != pdPASS)
-  // {
-  //   Serial.printf("Audio player task start failed: %d\n", ret);
-  //   return;
-  // }
-  // audio.connecttoFS(SPIFFS, "/music.mp3");
 
-  // test sdcard
-  // int attempts = 0;
-  // int maxAttempts = 50;
-  // int delayBetweenAttempts = 300;
-  // bool isblinked = false;
-  // pinMode(GPIO_NUM_40, OUTPUT);
-  // SPI.begin(GPIO_NUM_41, GPIO_NUM_48, GPIO_NUM_47, GPIO_NUM_40);
-  // while (!SD.begin(GPIO_NUM_40, SPI))
-  // {
-  //   Serial.printf("SD Card mount failed! (attempt %d of %d)\r\n", attempts, maxAttempts);
-  //   isblinked = !isblinked;
-  //   attempts++;
-  //   if (attempts > maxAttempts)
-  //   {
-  //     Serial.println("Giving up");
-  //   }
-  //   delay(delayBetweenAttempts);
-  // }
-  // Serial.println("Card type " + SD.cardType());
-  // Serial.println("Card size " + SD.cardSize());
+  audio_play_file("/sound/start_1.mp3");
+  testMjpeg();
+  main_view_init();
+  gif_request_show("/gif/8.gif");
 }
 
 void loop()
 {
   // audio.loop();
-  gif_splash_view_init();
+
+  if (millis() - lastCmd > 30000)
+  {
+    lastCmd = millis();
+    size_t idx = (size_t)(esp_random() % 10 + 1);
+    char path[32];
+    sprintf(path, "/gif/%d.gif", idx);
+    gif_request_show(path);
+  }
 }

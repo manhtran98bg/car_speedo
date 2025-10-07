@@ -19,6 +19,8 @@
         "variant": "cpp",
         "span": "c",
         "lv_examples.h": "c",
-        "new": "cpp"
+        "new": "cpp",
+        "vector": "cpp",
+        "fstream": "cpp"
     }
 }
