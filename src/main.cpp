@@ -19,8 +19,8 @@
 /*mjpeg & SD Card*/
 #define MJPEG_FILENAME "/video/splash.mjpeg"
 
-static const char *splash_video_file = "/video/splash.mjpeg";
-static const char *splash_audio_file = "/sound/start_1.mp3";
+static const char *splash_video_file = "/video/splash_2.mjpeg";
+static const char *splash_audio_file = "/sound/start_2.aac";
 MjpegPlayer *video_player;
 AudioPlayer *audio_player;
 
@@ -75,8 +75,8 @@ void setup()
   audio_player = new AudioPlayer();
   audio_player->begin(0);
 
-  video_player->playFile("/video/splash.mjpeg");
-  audio_player->playFile("/sound/start_1.mp3");
+  video_player->playFile(splash_video_file);
+  audio_player->playFile(splash_audio_file);
 }
 
 void loop()
