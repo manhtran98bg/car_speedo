@@ -27,7 +27,6 @@ SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
 
 // ==== External function ==== //
 
-
 // ==== Static function ==== //
 
 static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -42,12 +41,11 @@ static void meter_anim_cb(void *needle, int32_t v)
     int arc_value = map(v, 0, 10000, 0, 93);
     lv_img_set_angle(ui_img_needle, needle_angle);
     lv_arc_set_value(ui_Arc_rpm, arc_value);
-    
 }
 static void update_ui()
 {
     char speed_str[12];
-    static int last_rpm = 0; 
+    static int last_rpm = 0;
     int new_rpm = SpeedoData.rpm;
     if (SpeedoData.speed_kmph == -1)
         strcpy(speed_str, "---");
@@ -58,9 +56,9 @@ static void update_ui()
     lv_anim_t a;
     lv_anim_init(&a);
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)meter_anim_cb);
-    lv_anim_set_values(&a, last_rpm, new_rpm);    
-    lv_anim_set_time(&a, 150);                    
-    lv_anim_set_path_cb(&a, lv_anim_path_linear); 
+    lv_anim_set_values(&a, last_rpm, new_rpm);
+    lv_anim_set_time(&a, 150);
+    lv_anim_set_path_cb(&a, lv_anim_path_linear);
     lv_anim_start(&a);
     last_rpm = new_rpm;
 }
