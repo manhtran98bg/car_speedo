@@ -11,7 +11,6 @@
 
 #include "user_config.h"
 
-#include "Audio.h"
 #include "Views/gif_view.h"
 #include "Services/audio_player.h"
 #include "Services/mjpeg_player.h"
@@ -21,34 +20,33 @@
 
 static const char *splash_video_file = "/video/splash_2.mjpeg";
 static const char *splash_audio_file = "/sound/start_2.aac";
-MjpegPlayer *video_player;
-AudioPlayer *audio_player;
+
+static long lastCmd = 0;
+
+static int displayBack(JPEGDRAW *pDraw);
+
+MjpegPlayer* videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
+AudioPlayer* audioPlayer = new AudioPlayer();
 
 // Audio audio;
 
 static int displayBack(JPEGDRAW *pDraw)
 {
-  screen->draw16bitBeRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+  int x1 = pDraw->x;
+  int y1 = pDraw->y;
+  int x2 = x1 + pDraw->iWidth - 1;
+  int y2 = y1 + pDraw->iHeight - 1;
+  Screen.drawRegion(pDraw->pPixels, x1, y1, x2, y2);
   return 1;
 }
 
-static void fs_init()
-{
-  if (!LittleFS.begin(true))
-  {
-    Serial.println("LittleFS Mount Failed");
-    return;
-  }
-}
 
-static long lastCmd = 0;
-
-void onVideoPlayDone(const char * file)
+static void onVideoPlayDone(const char * file)
 {
   Serial.printf("Done playing %s\n", file);
   if (strcasecmp(file, splash_video_file)  == 0) {
     main_view_init();
-    audio_player->playFile("/sound/1.mp3");
+    audioPlayer->playFile("/sound/1.mp3");
     gif_request_show("/gif/8.gif");
   }
     
@@ -66,22 +64,23 @@ void setup()
   // ESP-IDF Version
   Serial.print("ESP-IDF Version: ");
   Serial.println(esp_get_idf_version());
-  fs_init();
-  display_init();
+  if (!LittleFS.begin(true))
+  {
+    Serial.println("LittleFS Mount Failed");
+    return;
+  }
+  Screen.begin();
 
-  video_player = new MjpegPlayer(displayBack, true, 0, 0, 240, 240);
-  video_player->begin(1);
-  video_player->setOnPlayDoneCallback(onVideoPlayDone);
-  audio_player = new AudioPlayer();
-  audio_player->begin(0);
+  videoPlayer->begin(1);
+  audioPlayer->begin(0);
 
-  video_player->playFile(splash_video_file);
-  audio_player->playFile(splash_audio_file);
+  videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
+  videoPlayer->playFile(splash_video_file);
+  videoPlayer->playFile(splash_audio_file);
 }
 
 void loop()
 {
-  // audio.loop();
 
   if (millis() - lastCmd > 30000)
   {

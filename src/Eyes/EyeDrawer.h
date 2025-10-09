@@ -16,6 +16,7 @@ You should have received a copy of the GNU Affero General Public License along w
 #include <Arduino.h>
 #include "Common.h"
 #include "EyeConfig.h"
+#include "Drivers/screen_driver.h"
 
 enum CornerType
 {
@@ -100,7 +101,6 @@ public:
     // Draw corners (which extend "outwards" towards corner of screen from supplied coordinate values)
     if (config->Radius_Top > 0)
     {
-      WHITE
       EyeDrawer::FillEllipseCorner(T_L, TLc_x, TLc_y, config->Radius_Top, config->Radius_Top, 0x3DDB);
       EyeDrawer::FillEllipseCorner(T_R, TRc_x, TRc_y, config->Radius_Top, config->Radius_Top, 0x3DDB);
     }
@@ -130,7 +130,7 @@ public:
       for (x = 0, y = ry, s = 2 * ry2 + rx2 * (1 - 2 * ry); ry2 * x <= rx2 * y; x++)
       {
         // u8g2.drawHLine(x0, y0 - y, x);
-        screen->drawFastHLine(x0, y0 - y, x, color);
+        Screen.drawFastHLine(x0, y0 - y, x, color);
         if (s >= 0)
         {
           s += fx2 * (1 - y);
@@ -141,7 +141,7 @@ public:
       for (x = rx, y = 0, s = 2 * rx2 + ry2 * (1 - 2 * rx); rx2 * y <= ry2 * x; y++)
       {
         // u8g2.drawHLine(x0, y0 - y, x);
-        screen->drawFastHLine(x0, y0 - y, x, color);
+        Screen.drawFastHLine(x0, y0 - y, x, color);
         if (s >= 0)
         {
           s += fy2 * (1 - x);
@@ -156,7 +156,7 @@ public:
       for (x = 0, y = ry, s = 2 * ry2 + rx2 * (1 - 2 * ry); ry2 * x <= rx2 * y; x++)
       {
         // u8g2.drawHLine(x0, y0 + y -1, x);
-        screen->drawFastHLine(x0, y0 + y - 1, x, color);
+        Screen.drawFastHLine(x0, y0 + y - 1, x, color);
         if (s >= 0)
         {
           s += fx2 * (1 - y);
@@ -167,7 +167,7 @@ public:
       for (x = rx, y = 0, s = 2 * rx2 + ry2 * (1 - 2 * rx); rx2 * y <= ry2 * x; y++)
       {
         // u8g2.drawHLine(x0, y0 + y -1, x);
-        screen->drawFastHLine(x0, y0 + y - 1, x, color);
+        Screen.drawFastHLine(x0, y0 + y - 1, x, color);
         if (s >= 0)
         {
           s += fy2 * (1 - x);
@@ -182,7 +182,7 @@ public:
       for (x = 0, y = ry, s = 2 * ry2 + rx2 * (1 - 2 * ry); ry2 * x <= rx2 * y; x++)
       {
         // u8g2.drawHLine(x0-x, y0 - y, x);
-        screen->drawFastHLine(x0 - x, y0 - y, x, color);
+        Screen.drawFastHLine(x0 - x, y0 - y, x, color);
         if (s >= 0)
         {
           s += fx2 * (1 - y);
@@ -193,7 +193,7 @@ public:
       for (x = rx, y = 0, s = 2 * rx2 + ry2 * (1 - 2 * rx); rx2 * y <= ry2 * x; y++)
       {
         // u8g2.drawHLine(x0-x, y0 - y, x);
-        screen->drawFastHLine(x0 - x, y0 - y, x, color);
+        Screen.drawFastHLine(x0 - x, y0 - y, x, color);
         if (s >= 0)
         {
           s += fy2 * (1 - x);
@@ -208,7 +208,7 @@ public:
       for (x = 0, y = ry, s = 2 * ry2 + rx2 * (1 - 2 * ry); ry2 * x <= rx2 * y; x++)
       {
         // u8g2.drawHLine(x0-x, y0 + y - 1, x);
-        screen->drawFastHLine(x0 - x, y0 + y - 1, x, color);
+        Screen.drawFastHLine(x0 - x, y0 + y - 1, x, color);
         if (s >= 0)
         {
           s += fx2 * (1 - y);
@@ -219,7 +219,7 @@ public:
       for (x = rx, y = 0, s = 2 * rx2 + ry2 * (1 - 2 * rx); rx2 * y <= ry2 * x; y++)
       {
         // u8g2.drawHLine(x0-x, y0 + y , x);
-        screen->drawFastHLine(x0 - x, y0 + y, x, color);
+        Screen.drawFastHLine(x0 - x, y0 + y, x, color);
         if (s >= 0)
         {
           s += fy2 * (1 - x);
@@ -244,7 +244,7 @@ public:
     // u8g2.drawBox(l, t, w, h);
     // u8g2.setDrawColor(1);
     uint16_t fillColor = (color == 0) ? BLACK : WHITE;
-    screen->fillRect(l, t, w, h, (uint16_t) color);
+    Screen.fillRect(l, t, w, h, (uint16_t) color);
   }
 
   static void FillRectangularTriangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t color)
@@ -252,7 +252,7 @@ public:
     // u8g2.setDrawColor(color);
     // u8g2.drawTriangle(x0, y0, x1, y1, x1, y0);
     // u8g2.setDrawColor(1);
-    screen->fillTriangle(x0, y0, x1, y1, x1, y0, color);
+    Screen.fillTriangle(x0, y0, x1, y1, x1, y0, color);
   }
 
   static void FillTriangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t color)
@@ -260,7 +260,7 @@ public:
     // u8g2.setDrawColor(color);
     // u8g2.drawTriangle(x0, y0, x1, y1, x2, y2);
     // u8g2.setDrawColor(1);
-    screen->fillTriangle(x0, y0, x1, y1, x2, y2, color);
+    Screen.fillTriangle(x0, y0, x1, y1, x2, y2, color);
   }
 };
 

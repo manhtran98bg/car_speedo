@@ -104,7 +104,6 @@ void lv_init(void)
     }
 
     LV_LOG_INFO("begin");
-
     /*Initialize the misc modules*/
     lv_mem_init();
 

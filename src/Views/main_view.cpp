@@ -19,23 +19,20 @@ static lv_disp_drv_t disp_drv;
 
 // ==== Private variables ==== //
 static bool ready = false;
-
 // ==== Global variables ==== //
 volatile UiMode currentMode = UI_MODE_ODO;
 SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
 
 // ==== External variables ==== //
-extern lv_obj_t *speedo_scr;
-extern lv_obj_t *splash_scr;
+
 // ==== External function ==== //
 
-extern void display_fadeIn();
 
 // ==== Static function ==== //
 
 static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
-    display_flush_data((uint16_t *)&color_p->full, area->x1, area->y1, area->x2, area->y2);
+    Screen.drawRegion((uint16_t *)&color_p->full, area->x1, area->y1, area->x2, area->y2);
     lv_disp_flush_ready(disp);
 }
 
@@ -108,6 +105,8 @@ static void mainUi_task(void *param)
 void main_view_init()
 {
     lv_init();
+    // lv_color_t* buf1 = (lv_color_t*)heap_caps_malloc(240 * 40 * sizeof(lv_color_t),
+    //                                              MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     lv_disp_draw_buf_init(&draw_buf, buf1, NULL, TFT_HOR_RES * 40);
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = TFT_HOR_RES;
@@ -123,7 +122,7 @@ void main_view_init()
     needle_Animation(uic_img_needle, 200);
     lv_timer_create([](lv_timer_t *t)
                     {
-                        display_fadeIn();
+                        Screen.fadeIn();
                         lv_timer_del(t); }, 0, NULL);
     lv_timer_create([](lv_timer_t *t)
                     { ready = true; }, 3000, NULL);

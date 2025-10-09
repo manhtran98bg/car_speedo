@@ -23,8 +23,7 @@ Arduino_Canvas::~Arduino_Canvas()
 
 bool Arduino_Canvas::begin(int32_t speed)
 {
-  if (
-      (speed != GFX_SKIP_OUTPUT_BEGIN) && (_output))
+  if ((speed != GFX_SKIP_OUTPUT_BEGIN) && (_output))
   {
     if (!_output->begin(speed))
     {
@@ -581,7 +580,7 @@ void Arduino_Canvas::flush()
     _output->draw16bitRGBBitmap(_output_x, _output_y, _framebuffer, WIDTH, HEIGHT);
   }
 }
-void Arduino_Canvas::flush(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h)
+void Arduino_Canvas::flushDirectNoCanvasBuffer(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h)
 {
   if (_output)
   {

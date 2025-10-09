@@ -5,7 +5,6 @@
 #include "AACDecoderHelix.h"
 #include "driver/i2s.h"
 #include "LittleFS.h"
-
 #include "user_config.h"
 
 class AudioPlayer

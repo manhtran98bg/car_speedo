@@ -121,7 +121,7 @@ static void GIFDraw(GIFDRAW *pDraw)
       if (iCount) // any opaque pixels?
       {
         // DMA would degrtade performance here due to short line segments
-        display_flush_data_1(usTemp[0], pDraw->iX + x, y, iCount, 1);
+        Screen.drawRect(usTemp[0], pDraw->iX + x, y, iCount, 1);
         x += iCount;
         iCount = 0;
       }
@@ -149,7 +149,7 @@ static void GIFDraw(GIFDRAW *pDraw)
     else
       for (iCount = 0; iCount < BUFFER_SIZE; iCount++)
         usTemp[dmaBuf][iCount] = usPalette[*s++];
-    display_flush_data_1(&usTemp[dmaBuf][0], pDraw->iX, y, iCount, 1);
+    Screen.drawRect(&usTemp[dmaBuf][0], pDraw->iX, y, iCount, 1);
     dmaBuf = !dmaBuf;
     iWidth -= iCount;
     // Loop if pixel buffer smaller than width
@@ -162,7 +162,7 @@ static void GIFDraw(GIFDRAW *pDraw)
       else
         for (iCount = 0; iCount < BUFFER_SIZE; iCount++)
           usTemp[dmaBuf][iCount] = usPalette[*s++];
-      display_flush_data_1(&usTemp[dmaBuf][0], pDraw->iX, y, iCount, 1);
+      Screen.drawRect(&usTemp[dmaBuf][0], pDraw->iX, y, iCount, 1);
       dmaBuf = !dmaBuf;
       iWidth -= iCount;
     }
@@ -236,7 +236,7 @@ void gif_task(void *pvParameters)
       currentMode = UI_MODE_GIF;
       if (xSemaphoreTake(displayMutex, pdMS_TO_TICKS(100)) == pdTRUE)
       {
-        screen->fillScreen(BLACK);
+        Screen.fillScreen(BLACK);
         Serial.printf("Playing GIF: %s\n", filename);
         show_gif(filename);
         xSemaphoreGive(displayMutex);
