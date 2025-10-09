@@ -36,7 +36,7 @@ bool Arduino_Canvas::begin(int32_t speed)
   {
     size_t s = _width * _height * 2;
 #if defined(ESP32)
-    _framebuffer = (uint16_t *)aligned_alloc(16, s);
+    _framebuffer = (uint16_t *)ps_malloc(s);
 #else
     _framebuffer = (uint16_t *)malloc(s);
 #endif
@@ -581,7 +581,13 @@ void Arduino_Canvas::flush()
     _output->draw16bitRGBBitmap(_output_x, _output_y, _framebuffer, WIDTH, HEIGHT);
   }
 }
-
+void Arduino_Canvas::flush(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h)
+{
+  if (_output)
+  {
+    _output->draw16bitRGBBitmap(x, y, bitmap, w, h);
+  }
+}
 void Arduino_Canvas::flushQuad(void)
 {
   int16_t y = _output_y;

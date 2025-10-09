@@ -7,10 +7,10 @@
 #include "SD.h"
 
 #include "FS.h"
-// #include "SPIFFS.h"
 #include <LittleFS.h>
 
 #include "user_config.h"
+
 #include "Audio.h"
 #include "Views/gif_view.h"
 #include "Services/audio_player.h"
