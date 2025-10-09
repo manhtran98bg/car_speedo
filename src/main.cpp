@@ -11,11 +11,11 @@
 
 #include "Audio.h"
 
-extern void gif_splash_view_init();
-extern void app_audio_init(void);
-extern BaseType_t app_audio_start_mp3_player(Stream *input, BaseType_t audioAssignCore);
+#include "Eyes/Face.h"
 
 // Audio audio;
+
+
 
 static void fs_init()
 {
@@ -25,7 +25,7 @@ static void fs_init()
     return;
   }
 }
-File aFile;
+extern void main_view_init();
 void setup()
 {
   delay(2000);
@@ -38,52 +38,30 @@ void setup()
   // ESP-IDF Version
   Serial.print("ESP-IDF Version: ");
   Serial.println(esp_get_idf_version());
-  // test spiffs
-  fs_init();
-  // audio.setPinout(I2S_BCLK, I2S_WS, I2S_DIN);
-  // audio.setVolume(10); // 0...21
+  // fs_init();
   display_init();
-  // main_view_init();
-  // app_audio_init();
-  // aFile = SPIFFS.open("/music.mp3");
-  // if (!aFile || aFile.isDirectory())
-  // {
-  //   Serial.println("ERROR: Failed to open file for reading\n");
-  //   return;
-  // }
-  // Serial.println("Start play audio task");
-  // BaseType_t ret = app_audio_start_mp3_player(&aFile, AUDIOASSIGNCORE);
-  // if (ret != pdPASS)
-  // {
-  //   Serial.printf("Audio player task start failed: %d\n", ret);
-  //   return;
-  // }
-  // audio.connecttoFS(SPIFFS, "/music.mp3");
+  main_view_init();
+  // // Create a new face
+  // face = new Face(/* screenWidth = */ 240, /* screenHeight = */ 240, /* eyeSize = */ 60);
+  // // Assign the current expression
+  // face->Expression.GoTo_Normal();
+  // face->Behavior.SetEmotion(eEmotions::Normal, 1.0);
+  // face->Behavior.SetEmotion(eEmotions::Angry, 1.0);
+  // face->Behavior.SetEmotion(eEmotions::Sad, 1.0);
+  // face->Behavior.SetEmotion(eEmotions::Surprised, 1.0);
+  // face->Behavior.SetEmotion(eEmotions::Happy, 1.0);
+  // face->Behavior.SetEmotion(eEmotions::Glee, 1.0);
+  // face->Behavior.SetEmotion(eEmotions::Scared, 1.0);
+  // face->RandomBehavior = true;
 
-  // test sdcard
-  // int attempts = 0;
-  // int maxAttempts = 50;
-  // int delayBetweenAttempts = 300;
-  // bool isblinked = false;
-  // pinMode(GPIO_NUM_40, OUTPUT);
-  // SPI.begin(GPIO_NUM_41, GPIO_NUM_48, GPIO_NUM_47, GPIO_NUM_40);
-  // while (!SD.begin(GPIO_NUM_40, SPI))
-  // {
-  //   Serial.printf("SD Card mount failed! (attempt %d of %d)\r\n", attempts, maxAttempts);
-  //   isblinked = !isblinked;
-  //   attempts++;
-  //   if (attempts > maxAttempts)
-  //   {
-  //     Serial.println("Giving up");
-  //   }
-  //   delay(delayBetweenAttempts);
-  // }
-  // Serial.println("Card type " + SD.cardType());
-  // Serial.println("Card size " + SD.cardSize());
+  // // Automatically blink
+  // face->RandomBlink = true;
+  // // Set blink rate
+  // face->Blink.Timer.SetIntervalMillis(4000);
+  // face->RandomLook = true;
 }
 
 void loop()
 {
-  // audio.loop();
-  gif_splash_view_init();
+  // face->Update();
 }

@@ -7,7 +7,7 @@
 #include "Drivers/screen_driver.h"
 
 #include "ui.h"
-
+#include "Eyes/Face.h"
 // ==== Display driver ==== //
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf1[TFT_HOR_RES * 40];
@@ -39,12 +39,11 @@ static void meter_anim_cb(void *needle, int32_t v)
     int arc_value = map(v, 0, 10000, 0, 93);
     lv_img_set_angle(ui_img_needle, needle_angle);
     lv_arc_set_value(ui_Arc_rpm, arc_value);
-    
 }
 static void update_ui()
 {
     char speed_str[12];
-    static int last_rpm = 0; 
+    static int last_rpm = 0;
     int new_rpm = SpeedoData.rpm;
     if (SpeedoData.speed_kmph == -1)
         strcpy(speed_str, "---");
@@ -55,9 +54,9 @@ static void update_ui()
     lv_anim_t a;
     lv_anim_init(&a);
     lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)meter_anim_cb);
-    lv_anim_set_values(&a, last_rpm, new_rpm);    
-    lv_anim_set_time(&a, 150);                    
-    lv_anim_set_path_cb(&a, lv_anim_path_linear); 
+    lv_anim_set_values(&a, last_rpm, new_rpm);
+    lv_anim_set_time(&a, 150);
+    lv_anim_set_path_cb(&a, lv_anim_path_linear);
     lv_anim_start(&a);
     last_rpm = new_rpm;
 }
@@ -78,6 +77,8 @@ static void updateData_task(void *param)
         vTaskDelay(200);
     }
 }
+Face *face;
+
 void main_view_init()
 {
     lv_init();
@@ -88,22 +89,49 @@ void main_view_init()
     disp_drv.flush_cb = disp_flush_callback;
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
-    ui_init();
-    needle_Animation(uic_img_needle, 200);
-    lv_timer_create([](lv_timer_t *t)
-                    {
-                        display_fadeIn();
-                        lv_timer_del(t); }, 0, NULL);
-    lv_timer_create([](lv_timer_t *t)
-                    { ready = true; }, 3000, NULL);
+    // lv_obj_t *Canvas;
+    // lv_color_t *Buffer;
+    // Buffer = (lv_color_t *)ps_malloc(100 * 100 * sizeof(lv_color_t));
+    // // Tạo canvas object
+    // Canvas = lv_canvas_create(lv_scr_act());
+    // lv_canvas_set_buffer(Canvas, Buffer, 100, 100, LV_IMG_CF_TRUE_COLOR);
+    // lv_obj_set_pos(Canvas, 70, 70);
+    // lv_canvas_fill_bg(Canvas, lv_palette_main(LV_PALETTE_RED), LV_OPA_COVER);
+
+    face = new Face(/* screenWidth = */ 120, /* screenHeight = */ 60, /* eyeSize = */ 30);
+    face->InitCanvas(lv_scr_act());
+    face->Expression.GoTo_Normal();
+    face->Behavior.SetEmotion(eEmotions::Normal, 1.0);
+    face->Behavior.SetEmotion(eEmotions::Angry, 1.0);
+    face->Behavior.SetEmotion(eEmotions::Sad, 1.0);
+    face->Behavior.SetEmotion(eEmotions::Surprised, 1.0);
+    face->Behavior.SetEmotion(eEmotions::Happy, 1.0);
+    face->Behavior.SetEmotion(eEmotions::Glee, 1.0);
+    face->Behavior.SetEmotion(eEmotions::Scared, 1.0);
+    face->RandomBehavior = true;
+
+    // Automatically blink
+    face->RandomBlink = true;
+    // Set blink rate
+    face->Blink.Timer.SetIntervalMillis(4000);
+    face->RandomLook = true;
+    // ui_init();
+    // needle_Animation(uic_img_needle, 200);
+    // lv_timer_create([](lv_timer_t *t)
+    //                 {
+    //                     display_fadeIn();
+    //                     lv_timer_del(t); }, 0, NULL);
+    // lv_timer_create([](lv_timer_t *t)
+    //                 { ready = true; }, 3000, NULL);
     xTaskCreate([](void *param)
                 {
                     while (true)
                     {
                         lv_timer_handler();
+                        face->Update();
                         vTaskDelay(pdMS_TO_TICKS(1));
                     } },
                 "lvgl_loop_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
 
-    xTaskCreate(updateData_task, "updateData_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
+    // xTaskCreate(updateData_task, "updateData_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
