@@ -29,11 +29,12 @@ class Face;
 class Eye {
   protected:
     Face& _face;
+
     void Update();
     void ChainOperators();
-    lv_obj_t *_canvas;
+
   public:
-    Eye(Face& face, lv_obj_t *canvas);
+    Eye(Face& face);
 
     uint16_t CenterX;
     uint16_t CenterY;
@@ -47,7 +48,7 @@ class Eye {
     EyeVariation Variation1;
     EyeVariation Variation2;
     EyeBlink BlinkTransformation;
-    void SetCanvas(lv_obj_t *canvas);
+
     void ApplyPreset(const EyeConfig preset);
     void TransitionTo(const EyeConfig preset);
     void Draw();

@@ -42,11 +42,6 @@ public:
     FaceBehavior Behavior;
     FaceExpression Expression;
 
-     // Canvas của LVGL
-    lv_obj_t *Canvas;
-    lv_color_t *Buffer;
-
-    void InitCanvas(lv_obj_t *parent);
     void Update();
     void DoBlink();
 

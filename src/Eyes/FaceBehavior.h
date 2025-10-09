@@ -29,14 +29,10 @@ class FaceBehavior
 
 	eEmotions CurrentEmotion;
 
-	float Emotions[eEmotions::EMOTIONS_COUNT];
+	eEmotions Emotions[eEmotions::EMOTIONS_COUNT];
 
 	AsyncTimer Timer;
-
-	void SetEmotion(eEmotions emotion, float value);
-	float GetEmotion(eEmotions emotion);
-
-	void Clear();
+	void UseAllEmotion();
 	void Update();
 	eEmotions GetRandomEmotion();
 

@@ -12,10 +12,10 @@ You should have received a copy of the GNU Affero General Public License along w
 
 #include "Eye.h"
 
-Eye::Eye(Face &face, lv_obj_t *canvas) : _face(face), _canvas(canvas)
-{
+Eye::Eye(Face& face) : _face(face) {
 
-	this->IsMirrored = false;
+  this->IsMirrored = false;
+
 	ChainOperators();
 	Variation1.Animation._t0 = 200;
 	Variation1.Animation._t1 = 200;
@@ -32,8 +32,7 @@ Eye::Eye(Face &face, lv_obj_t *canvas) : _face(face), _canvas(canvas)
 	Variation2.Animation.Interval = 800;
 }
 
-void Eye::ChainOperators()
-{
+void Eye::ChainOperators() {
 	Transition.Origin = &Config;
 	Transformation.Input = &Config;
 	Variation1.Input = &(Transformation.Output);
@@ -42,8 +41,7 @@ void Eye::ChainOperators()
 	FinalConfig = &(BlinkTransformation.Output);
 }
 
-void Eye::Update()
-{
+void Eye::Update() {
 	Transition.Update();
 	Transformation.Update();
 	Variation1.Update();
@@ -51,19 +49,12 @@ void Eye::Update()
 	BlinkTransformation.Update();
 }
 
-void Eye::SetCanvas(lv_obj_t *canvas)
-{
-    _canvas = canvas;
-}
-
-void Eye::Draw()
-{
+void Eye::Draw() {
 	Update();
-	EyeDrawer::Draw(_canvas, CenterX, CenterY, FinalConfig);
+	EyeDrawer::Draw(CenterX, CenterY, FinalConfig);
 }
 
-void Eye::ApplyPreset(const EyeConfig config)
-{
+void Eye::ApplyPreset(const EyeConfig config) {
 	Config.OffsetX = this->IsMirrored ? -config.OffsetX : config.OffsetX;
 	Config.OffsetY = -config.OffsetY;
 	Config.Height = config.Height;
@@ -78,8 +69,7 @@ void Eye::ApplyPreset(const EyeConfig config)
 	Transition.Animation.Restart();
 }
 
-void Eye::TransitionTo(const EyeConfig config)
-{
+void Eye::TransitionTo(const EyeConfig config) {
 	Transition.Destin.OffsetX = this->IsMirrored ? -config.OffsetX : config.OffsetX;
 	Transition.Destin.OffsetY = -config.OffsetY;
 	Transition.Destin.Height = config.Height;

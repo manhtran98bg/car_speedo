@@ -23,17 +23,17 @@ enum eEmotions {
 	Sad,
 	Worried,
 	Focused,
-	Annoyed,
+	Annoyed, //Khó chịu
 	Surprised,
-	Skeptic,
-	Frustrated,
-	Unimpressed,
-	Sleepy,
-	Suspicious,
-	Squint,
-	Furious,
-	Scared,
-	Awe,
+	Skeptic, //Người hoài nghi
+	Frustrated, //Bực bội
+	Unimpressed, //Không ấn tượng
+	Sleepy, //Buồn ngủ
+	Suspicious, //Khả nghi
+	Squint, //Nheo mắt
+	Furious, //Giận dữ
+	Scared, //Sợ hãi
+	Awe, //Kinh ngạc
 	EMOTIONS_COUNT
 };
 

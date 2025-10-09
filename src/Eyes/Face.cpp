@@ -15,7 +15,7 @@ You should have received a copy of the GNU Affero General Public License along w
 #include "Drivers/screen_driver.h"
 
 Face::Face(uint16_t screenWidth, uint16_t screenHeight, uint16_t eyeSize)
-	: LeftEye(*this, nullptr), RightEye(*this, nullptr), Blink(*this), Look(*this), Behavior(*this), Expression(*this)
+	: LeftEye(*this), RightEye(*this), Blink(*this), Look(*this), Behavior(*this), Expression(*this)
 {
 	Width = screenWidth;
 	Height = screenHeight;
@@ -25,22 +25,9 @@ Face::Face(uint16_t screenWidth, uint16_t screenHeight, uint16_t eyeSize)
 	CenterY = Height / 2;
 
 	LeftEye.IsMirrored = true;
-	Behavior.Clear();
 	Behavior.Timer.Start();
 }
-void Face::InitCanvas(lv_obj_t *parent)
-{
-    // Tạo buffer cho canvas
 
-    Buffer = (lv_color_t *)ps_malloc(Width * Height * sizeof(lv_color_t));
-    // Tạo canvas object
-    Canvas = lv_canvas_create(parent);
-    lv_canvas_set_buffer(Canvas, Buffer, Width, Height, LV_IMG_CF_TRUE_COLOR);
-    lv_canvas_fill_bg(Canvas, lv_palette_main(LV_PALETTE_RED), LV_OPA_COVER);
-	LeftEye.SetCanvas(Canvas);
-	RightEye.SetCanvas(Canvas);
-	EyeDrawer::InitDrawDescriptors();
-}
 void Face::LookFront()
 {
 	Look.LookAt(0.0, 0.0);
@@ -103,4 +90,5 @@ void Face::Draw()
 	RightEye.CenterX = CenterX + EyeSize / 2 + EyeInterDistance;
 	RightEye.CenterY = CenterY;
 	RightEye.Draw();
+	screen->flush();
 }

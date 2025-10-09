@@ -9,57 +9,46 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses
 ****************************************************/
-
+#include "Arduino.h"
 #include "Face.h"
 #include "FaceBehavior.h"
 #include "FaceEmotions.hpp"
-
-FaceBehavior::FaceBehavior(Face& face) : _face(face), Timer(500) {
+static const eEmotions moods[] = {	
+  	eEmotions::Normal,
+	eEmotions::Angry,
+	eEmotions::Glee,
+	eEmotions::Happy,
+	eEmotions::Sad,
+	eEmotions::Worried,
+	eEmotions::Focused,
+	eEmotions::Annoyed, //Khó chịu
+	eEmotions::Surprised,
+	eEmotions::Skeptic, //Người hoài nghi
+	eEmotions::Frustrated, //Bực bội
+	eEmotions::Unimpressed, //Không ấn tượng
+	eEmotions::Sleepy, //Buồn ngủ
+	eEmotions::Suspicious, //Khả nghi
+	eEmotions::Squint, //Nheo mắt
+	eEmotions::Furious, //Giận dữ
+	eEmotions::Scared, //Sợ hãi
+	eEmotions::Awe, //Kinh ngạc
+}; 
+FaceBehavior::FaceBehavior(Face& face) : _face(face), Timer(5000) {
 	Timer.Start();
-	Clear();
-	Emotions[(int)eEmotions::Normal] = 1.0;
+	UseAllEmotion();
 }
 
-void FaceBehavior::SetEmotion(eEmotions emotion, float value) {
-	Emotions[emotion] = value;
-}
-
-float FaceBehavior::GetEmotion(eEmotions emotion) {
-	return Emotions[emotion];
-}
-
-void FaceBehavior::Clear() {
-	for (int emotion = 0; emotion < eEmotions::EMOTIONS_COUNT; emotion++) {
-		Emotions[emotion] = 0.0;
+void FaceBehavior::UseAllEmotion() {
+	for (int i = 0; i < eEmotions::EMOTIONS_COUNT ; i ++) {
+		Emotions[i] = moods[i];
 	}
 }
 
 // Use roulette wheel to select a new emotion, based on assigned weights
 eEmotions FaceBehavior::GetRandomEmotion() {
-
-  // Calculate the total sum of all emotional weights
-	float sum_of_weight = 0;
-	for (int emotion = 0; emotion < eEmotions::EMOTIONS_COUNT; emotion++) {
-		sum_of_weight += Emotions[emotion];
-	}
-  // If no weights have been assigned, default to "normal" emotion
-	if (sum_of_weight == 0) {
-		return eEmotions::Normal;
-	}
-  // Now pick a random number that lies somewhere in the range of total weights
-	float rand = random(0, 1000 * sum_of_weight) / 1000.0;
-  // Loop over emotions and select the one whose probabity distribution contains
-  // the value in which the random number lies
-	float acc = 0;
-	for (int emotion = 0; emotion < eEmotions::EMOTIONS_COUNT; emotion++) {
-		if (Emotions[emotion] == 0) continue;
-		acc += Emotions[emotion];
-		if (rand <= acc) {
-			return (eEmotions)emotion;
-		}
-	}
-  // If something goes wrong in the calculation, return "normal"
-	return eEmotions::Normal;
+  	int index = esp_random() % eEmotions::EMOTIONS_COUNT;
+	Serial.printf("Go to Emotion %d \n", index);
+	return Emotions[index];
 }
 
 void FaceBehavior::Update() {
