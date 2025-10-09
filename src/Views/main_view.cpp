@@ -1,12 +1,13 @@
 #include "Arduino.h"
-#include "main_view.h"
+#include "AnimatedGIF.h"
 #include "lvgl.h"
+#include "ui.h"
+
+#include "main_view.h"
 #include "user_config.h"
 #include "Models/data_model.h"
-#include "AnimatedGIF.h"
 #include "Drivers/screen_driver.h"
-
-#include "ui.h"
+#include "gif_view.h"
 
 // ==== Display driver ==== //
 static lv_disp_draw_buf_t draw_buf;
@@ -18,18 +19,20 @@ static lv_disp_drv_t disp_drv;
 
 // ==== Private variables ==== //
 static bool ready = false;
+// ==== Global variables ==== //
+volatile UiMode currentMode = UI_MODE_ODO;
+SemaphoreHandle_t displayMutex = xSemaphoreCreateMutex();
+
 // ==== External variables ==== //
-extern lv_obj_t *speedo_scr;
-extern lv_obj_t *splash_scr;
+
 // ==== External function ==== //
 
-extern void display_fadeIn();
 
 // ==== Static function ==== //
 
 static void disp_flush_callback(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
 {
-    display_flush_data((uint16_t *)&color_p->full, area->x1, area->y1, area->x2, area->y2);
+    Screen.drawRegion((uint16_t *)&color_p->full, area->x1, area->y1, area->x2, area->y2);
     lv_disp_flush_ready(disp);
 }
 
@@ -65,44 +68,64 @@ static void updateData_task(void *param)
 {
     while (true)
     {
-        if (ready)
+        if (ready && currentMode == UI_MODE_ODO)
         {
-            if (SpeedoData.speed_kmph <= 100)
-                SpeedoData.speed_kmph += 1;
-            else
-                SpeedoData.speed_kmph = 0;
-            SpeedoData.rpm = SpeedoData.speed_kmph * 100;
-            update_ui();
+            if (xSemaphoreTake(displayMutex, 0) == pdTRUE)
+            {
+                if (SpeedoData.speed_kmph <= 100)
+                    SpeedoData.speed_kmph += 1;
+                else
+                    SpeedoData.speed_kmph = 0;
+                SpeedoData.rpm = SpeedoData.speed_kmph * 100;
+                update_ui();
+                xSemaphoreGive(displayMutex);
+            }
         }
+        // Serial.println("update ui");
         vTaskDelay(200);
     }
 }
+
+static void mainUi_task(void *param)
+{
+    while (true)
+    {
+        if (currentMode == UI_MODE_ODO)
+        {
+            if (xSemaphoreTake(displayMutex, 0) == pdTRUE)
+            {
+                lv_timer_handler();
+                xSemaphoreGive(displayMutex);
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+}
+
 void main_view_init()
 {
     lv_init();
+    // lv_color_t* buf1 = (lv_color_t*)heap_caps_malloc(240 * 40 * sizeof(lv_color_t),
+    //                                              MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     lv_disp_draw_buf_init(&draw_buf, buf1, NULL, TFT_HOR_RES * 40);
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = TFT_HOR_RES;
     disp_drv.ver_res = TFT_VER_RES;
     disp_drv.flush_cb = disp_flush_callback;
     disp_drv.draw_buf = &draw_buf;
+    disp_drv.full_refresh = true;
     lv_disp_drv_register(&disp_drv);
+
     ui_init();
+    gif_view_init();
+
     needle_Animation(uic_img_needle, 200);
     lv_timer_create([](lv_timer_t *t)
                     {
-                        display_fadeIn();
+                        Screen.fadeIn();
                         lv_timer_del(t); }, 0, NULL);
     lv_timer_create([](lv_timer_t *t)
                     { ready = true; }, 3000, NULL);
-    xTaskCreate([](void *param)
-                {
-                    while (true)
-                    {
-                        lv_timer_handler();
-                        vTaskDelay(pdMS_TO_TICKS(1));
-                    } },
-                "lvgl_loop_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
-
-    xTaskCreate(updateData_task, "updateData_task", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(mainUi_task, "mainUi_task", 4096, NULL, configMAX_PRIORITIES, NULL);
+    xTaskCreate(updateData_task, "updateData_task", 4096, NULL, configMAX_PRIORITIES - 2, NULL);
 }

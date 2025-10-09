@@ -1,11 +1,35 @@
-#ifndef _SCREEN_DRIVER_H_
-#define _SCREEN_DRIVER_H_
-#include "Arduino.h"
-#include "Arduino_GFX_Library.h"
+#pragma once
+#include <Arduino.h>
+#include <Arduino_GFX_Library.h>
+#include <Arduino_DriveBus_Library.h>
+#include "user_config.h"
 
-void display_init();
-void display_flush_data(uint16_t *data, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
-void display_flush_data_1(uint16_t *data, int16_t x, int16_t y, int16_t w, int16_t h);
-void display_off();
-extern Arduino_GFX *screen;
-#endif
+class ScreenDriver : public Arduino_Canvas
+{
+public:
+    ScreenDriver();
+    void begin();
+    
+    void on() const;
+    void off() const;
+    void fadeIn();
+    void drawRect(uint16_t *data, int16_t x, int16_t y, int16_t w, int16_t h);
+    void drawRegion(uint16_t *data, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+    
+private:
+    void setDriver(Arduino_G *gfx);
+    // LEDC constants
+    static constexpr int LEDC_TIMER_RES = 8;
+    static constexpr int LEDC_DUTY_MIN = 0;
+    static constexpr int LEDC_DUTY_MAX = 255;
+    static constexpr int LEDC_CHANNEL = 0;
+    static constexpr int LEDC_PIN = LCD_BL;
+    static constexpr int LEDC_FREQ = 5000;
+
+    Arduino_DataBus *_bus;
+    Arduino_GFX *_tft;
+    static void fadeInTask(void *param);
+    
+};
+
+extern ScreenDriver Screen;
