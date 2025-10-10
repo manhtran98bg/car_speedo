@@ -1,13 +1,18 @@
 #include "screen_driver.h"
 
 ScreenDriver Screen;
-static Arduino_DataBus *bus = new Arduino_ESP32SPI(LCD_DC, LCD_CS, LCD_SCLK, LCD_SDA, -1, HSPI);
-static Arduino_GFX *tft = new Arduino_GC9A01(bus, LCD_RST, 0, true, LCD_WIDTH, LCD_HEIGHT);
-ScreenDriver::ScreenDriver()
-    : Arduino_Canvas(LCD_WIDTH, LCD_HEIGHT, tft)
+
+static Arduino_GFX *GetTFTInstance()
 {
-    _bus = bus;
-    _tft = tft;
+    static Arduino_DataBus *bus = new Arduino_ESP32SPI(LCD_DC, LCD_CS, LCD_SCLK, LCD_SDA, -1, HSPI);
+    static Arduino_GFX *tft = new Arduino_GC9A01(bus, LCD_RST, 0, true, LCD_WIDTH, LCD_HEIGHT);
+    return tft;
+}
+
+ScreenDriver::ScreenDriver()
+    : Arduino_Canvas(LCD_WIDTH, LCD_HEIGHT, GetTFTInstance())
+{
+    _tft = GetTFTInstance();
 }
 
 void ScreenDriver::begin()
@@ -16,17 +21,14 @@ void ScreenDriver::begin()
     ledcSetup(LEDC_CHANNEL, LEDC_FREQ, LEDC_TIMER_RES);
     ledcAttachPin(LEDC_PIN, LEDC_CHANNEL);
     off();
-    Arduino_Canvas::begin();  
-    fillScreen(RED);
+    Arduino_Canvas::begin(); 
+    fillScreen(BLACK);
     setRotation(TFT_ROTATION);
     flush();
     delay(100);
     on();
 }
 
-void ScreenDriver::setDriver(Arduino_G *gfx) {
-    this->_output = gfx;
-}
 void ScreenDriver::on() const
 {
     ledcWrite(LEDC_CHANNEL, LEDC_DUTY_MAX);

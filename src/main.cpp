@@ -8,6 +8,7 @@
 
 #include "FS.h"
 #include <LittleFS.h>
+#include "SPIFFS.h"
 
 #include "user_config.h"
 
@@ -50,7 +51,16 @@ static void onVideoPlayDone(const char *file)
 		gif_request_show("/gif/8.gif");
 	}
 }
-
+void fs_init()
+{
+	Serial.println("Initializing file system...");
+	if (!LittleFS.begin(true))
+	{
+		Serial.println("LittleFS Mount Failed");
+		return;
+	}
+	Serial.println("File system initialized.");
+}
 void setup()
 {
 	delay(2000);
@@ -63,14 +73,9 @@ void setup()
 	// ESP-IDF Version
 	Serial.print("ESP-IDF Version: ");
 	Serial.println(esp_get_idf_version());
-	// if (!LittleFS.begin(true))
-	// {
-	// 	Serial.println("LittleFS Mount Failed");
-	// 	return;
-	// }
-	Serial.println("LittleFS Mount Success!");
-	Screen.begin();
-	main_view_init();
+	fs_init();
+	// Screen.begin();
+	// main_view_init();
 	// videoPlayer->begin(1);
 	// audioPlayer->begin(0);
 
