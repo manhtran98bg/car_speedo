@@ -115,7 +115,7 @@ void main_view_init()
     lv_disp_drv_register(&disp_drv);
 
     ui_init();
-    gif_view_init();
+    // gif_view_init();
 
     needle_Animation(uic_img_needle, 200);
     lv_timer_create([](lv_timer_t *t)

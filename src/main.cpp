@@ -63,30 +63,33 @@ void setup()
 	// ESP-IDF Version
 	Serial.print("ESP-IDF Version: ");
 	Serial.println(esp_get_idf_version());
-	if (!LittleFS.begin(true))
-	{
-		Serial.println("LittleFS Mount Failed");
-		return;
-	}
+	// if (!LittleFS.begin(true))
+	// {
+	// 	Serial.println("LittleFS Mount Failed");
+	// 	return;
+	// }
+	Serial.println("LittleFS Mount Success!");
 	Screen.begin();
+	main_view_init();
+	// videoPlayer->begin(1);
+	// audioPlayer->begin(0);
 
-	videoPlayer->begin(1);
-	audioPlayer->begin(0);
-
-	videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
-	videoPlayer->playFile(splash_video_file);
-	videoPlayer->playFile(splash_audio_file);
+	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
+	// videoPlayer->playFile(splash_video_file);
+	// videoPlayer->playFile(splash_audio_file);
 }
 
 void loop()
 {
 
-	if (millis() - lastCmd > 30000)
-	{
-		lastCmd = millis();
-		size_t idx = (size_t)(esp_random() % 10 + 1);
-		char path[32];
-		sprintf(path, "/gif/%d.gif", idx);
-		gif_request_show(path);
-	}
+	Serial.println("loop");
+	delay(1000);
+	// if (millis() - lastCmd > 30000)
+	// {
+	// 	lastCmd = millis();
+	// 	size_t idx = (size_t)(esp_random() % 10 + 1);
+	// 	char path[32];
+	// 	sprintf(path, "/gif/%d.gif", idx);
+	// 	gif_request_show(path);
+	// }
 }

@@ -1,25 +1,25 @@
 #include "screen_driver.h"
 
 ScreenDriver Screen;
-
+static Arduino_DataBus *bus = new Arduino_ESP32SPI(LCD_DC, LCD_CS, LCD_SCLK, LCD_SDA, -1, HSPI);
+static Arduino_GFX *tft = new Arduino_GC9A01(bus, LCD_RST, 0, true, LCD_WIDTH, LCD_HEIGHT);
 ScreenDriver::ScreenDriver()
-    : Arduino_Canvas(LCD_WIDTH, LCD_HEIGHT, nullptr) // tạm thời chưa có GFX, gán sau
+    : Arduino_Canvas(LCD_WIDTH, LCD_HEIGHT, tft)
 {
-    _bus = new Arduino_ESP32SPI(LCD_DC, LCD_CS, LCD_SCLK, LCD_SDA, -1, HSPI);
-    _tft = new Arduino_GC9A01(_bus, LCD_RST, 0, true, LCD_WIDTH, LCD_HEIGHT);
-    this->setDriver(_tft);
+    _bus = bus;
+    _tft = tft;
 }
 
 void ScreenDriver::begin()
 {
     Serial.println("Initializing Display...");
-
     ledcSetup(LEDC_CHANNEL, LEDC_FREQ, LEDC_TIMER_RES);
     ledcAttachPin(LEDC_PIN, LEDC_CHANNEL);
     off();
-    Arduino_Canvas::begin();   // Gọi begin() của lớp cha
-    fillScreen(BLACK);         // Gọi trực tiếp API của Canvas
+    Arduino_Canvas::begin();  
+    fillScreen(RED);
     setRotation(TFT_ROTATION);
+    flush();
     delay(100);
     on();
 }
