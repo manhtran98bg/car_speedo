@@ -20,14 +20,14 @@
 #define MJPEG_FILENAME "/video/splash.mjpeg"
 
 static const char *splash_video_file = "/video/splash_2.mjpeg";
-static const char *splash_audio_file = "/sound/start_2.aac";
+static const char *splash_audio_file = "/audio/splash_2.aac";
 
 static long lastCmd = 0;
 
 static int displayBack(JPEGDRAW *pDraw);
 
-MjpegPlayer *videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
-AudioPlayer *audioPlayer = new AudioPlayer();
+MjpegPlayer *videoPlayer;
+AudioPlayer *audioPlayer;
 
 // Audio audio;
 
@@ -51,7 +51,7 @@ static void onVideoPlayDone(const char *file)
 		gif_request_show("/gif/8.gif");
 	}
 }
-void fs_init()
+void fsInit()
 {
 	Serial.println("Initializing file system...");
 	if (!LittleFS.begin(true))
@@ -73,28 +73,26 @@ void setup()
 	// ESP-IDF Version
 	Serial.print("ESP-IDF Version: ");
 	Serial.println(esp_get_idf_version());
-	fs_init();
-	// Screen.begin();
-	// main_view_init();
-	// videoPlayer->begin(1);
-	// audioPlayer->begin(0);
+	fsInit();
+	Screen.begin();
+	videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
+	audioPlayer = new AudioPlayer();
+	videoPlayer->begin(1);
+	audioPlayer->begin(0);
 
-	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
-	// videoPlayer->playFile(splash_video_file);
-	// videoPlayer->playFile(splash_audio_file);
+	videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
+	videoPlayer->playFile(splash_video_file);
+	audioPlayer->playFile(splash_audio_file);
 }
 
 void loop()
 {
-
-	Serial.println("loop");
-	delay(1000);
-	// if (millis() - lastCmd > 30000)
-	// {
-	// 	lastCmd = millis();
-	// 	size_t idx = (size_t)(esp_random() % 10 + 1);
-	// 	char path[32];
-	// 	sprintf(path, "/gif/%d.gif", idx);
-	// 	gif_request_show(path);
-	// }
+	if (millis() - lastCmd > 30000)
+	{
+		lastCmd = millis();
+		size_t idx = (size_t)(esp_random() % 10 + 1);
+		char path[32];
+		sprintf(path, "/gif/%d.gif", idx);
+		gif_request_show(path);
+	}
 }
