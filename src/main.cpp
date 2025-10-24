@@ -79,7 +79,6 @@ void setup()
 	audioPlayer = new AudioPlayer();
 	videoPlayer->begin(1);
 	audioPlayer->begin(0);
-
 	videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
 	videoPlayer->playFile(splash_video_file);
 	audioPlayer->playFile(splash_audio_file);
