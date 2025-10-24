@@ -1,3 +1,8 @@
 [submodule "lib/arduino-libhelix"]
     path = lib/arduino-libhelix
     url = https://github.com/pschatzmann/arduino-libhelix.git
+
+[submodule "lib/Preferences"]
+    path = lib/Preferences
+    url = https://github.com/vshymanskyy/Preferences.git
+    
