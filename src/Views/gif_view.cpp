@@ -6,7 +6,7 @@
 #include "LittleFS.h"
 #include "ui.h"
 
-#include "Drivers/screen_driver.h"
+#include "Drivers/Display/ScreenDriver.h"
 #include "user_config.h"
 #include "gif_view.h"
 

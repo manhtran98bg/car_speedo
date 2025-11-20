@@ -6,7 +6,7 @@
 #include "main_view.h"
 #include "user_config.h"
 #include "Models/data_model.h"
-#include "Drivers/screen_driver.h"
+#include "Drivers/Display/ScreenDriver.h"
 #include "gif_view.h"
 
 // ==== Display driver ==== //
@@ -120,7 +120,7 @@ void main_view_init()
     needle_Animation(uic_img_needle, 200);
     lv_timer_create([](lv_timer_t *t)
                     {
-                        Screen.fadeIn();
+                        Screen.fadeIn(1000);
                         lv_timer_del(t); }, 0, NULL);
     lv_timer_create([](lv_timer_t *t)
                     { ready = true; }, 3000, NULL);

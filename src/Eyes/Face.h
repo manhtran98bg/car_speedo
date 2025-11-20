@@ -26,7 +26,7 @@ You should have received a copy of the GNU Affero General Public License along w
 class Face {
 
 public:
-    Face(uint16_t screenWidth, uint16_t screenHeight, uint16_t eyeSize);
+    Face(ICanvas* canvas, uint16_t eyeSize, uint16_t screenWidth = 240, uint16_t screenHeight = 240, uint16_t backgroundColor = 0, uint16_t eyeColor = 0xffff);
 
     uint16_t Width;
     uint16_t Height;
@@ -34,7 +34,7 @@ public:
     uint16_t CenterY;
     uint16_t EyeSize;
     uint16_t EyeInterDistance = 4;
-
+    ICanvas* _canvas;
     Eye LeftEye;
     Eye RightEye;
     BlinkAssistant Blink;
@@ -55,9 +55,12 @@ public:
     void LookTop();
     void LookBottom();
     void Wait(unsigned long milliseconds);
+    void SetPos(int x, int y);
 
 protected:
     void Draw();
+    int _x;
+    int _y;
 };
 
 #endif

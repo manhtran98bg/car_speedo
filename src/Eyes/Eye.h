@@ -35,7 +35,6 @@ class Eye {
 
   public:
     Eye(Face& face);
-
     uint16_t CenterX;
     uint16_t CenterY;
     bool IsMirrored = false;
@@ -51,7 +50,7 @@ class Eye {
 
     void ApplyPreset(const EyeConfig preset);
     void TransitionTo(const EyeConfig preset);
-    void Draw();
+    void Draw(ICanvas* canvas);
 };
 
 #endif

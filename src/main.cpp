@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "FreeRTOS.h"
 #include "Views/main_view.h"
-#include "Drivers/screen_driver.h"
 #include "Arduino_DriveBus_Library.h"
 #include <AnimatedGIF.h>
 #include "SD.h"
@@ -17,9 +16,7 @@
 #include "Services/mjpeg_player.h"
 
 #include "Eyes/Face.h"
-
-#include <LovyanGFX.hpp>
-#include "LGFX_Screen.hpp"
+#include "Drivers/Display/ScreenDriver.h"
 
 /*mjpeg & SD Card*/
 #define MJPEG_FILENAME "/video/splash.mjpeg"
@@ -34,8 +31,8 @@ static int displayBack(JPEGDRAW *pDraw);
 MjpegPlayer *videoPlayer;
 AudioPlayer *audioPlayer;
 
-Face face(240, 240, 60);
-
+Face *face;
+CanvasImpl *canvas;
 // Audio audio;
 
 
@@ -83,9 +80,13 @@ void setup()
 	Serial.println(esp_get_idf_version());
 	fsInit();
 	Screen.begin();
-	face.RandomBehavior = true;
-	face.RandomBlink = true;
-	face.RandomLook = true;
+	int id = Screen.createSprite(120, 120, 1);
+	canvas = new CanvasImpl(&Screen, id);
+	face = new Face(canvas, 60, 240, 240, BLACK, YELLOW);
+	auto panel = Screen.getPanel();
+	panel->setTextColor(RED);
+	panel->setFont(&Font4);
+	panel->drawString("Hello", 60, 0);
 	// videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
 	// audioPlayer = new AudioPlayer();
 	// videoPlayer->begin(1);
@@ -93,18 +94,6 @@ void setup()
 	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
 	// videoPlayer->playFile(splash_video_file);
 	// audioPlayer->playFile(splash_audio_file);
-
-	// lcd.init();
-	// lcd.setRotation(0);
-	// lcd.setColorDepth(16);
-	// lcd.fillScreen(lcd.color565(0, 0, 0));
-	// lcd.setTextColor(0);
-	// lcd.setFont(&fonts::Font4);
-	// lcd.drawString("string!", 50, 50);
-	// sprite.setColorDepth(1);
-	// sprite.createSprite(240, 240);
-	// sprite.drawRect(0, 0, 65, 65, 1);
-	// sprite.pushSprite(120, 120);
 }
 
 void loop()
@@ -117,5 +106,5 @@ void loop()
 	// 	sprintf(path, "/gif/%d.gif", idx);
 	// 	gif_request_show(path);
 	// }
-	face.Update();
+	face->Update();
 }
