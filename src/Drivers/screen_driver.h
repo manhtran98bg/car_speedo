@@ -1,10 +1,14 @@
 #pragma once
 #include <Arduino.h>
-#include <Arduino_GFX_Library.h>
-#include <Arduino_DriveBus_Library.h>
-#include "user_config.h"
+// #include <Arduino_GFX_Library.h>
+// #include <Arduino_DriveBus_Library.h>
+// #include "user_config.h"
 
-class ScreenDriver : public Arduino_Canvas
+#include <LovyanGFX.hpp>
+#include "LGFX_Screen.hpp"
+
+
+class ScreenDriver : public LGFX_Sprite
 {
 public:
     ScreenDriver();
@@ -22,11 +26,10 @@ private:
     static constexpr int LEDC_DUTY_MIN = 0;
     static constexpr int LEDC_DUTY_MAX = 255;
     static constexpr int LEDC_CHANNEL = 0;
-    static constexpr int LEDC_PIN = LCD_BL;
+    static constexpr int LEDC_PIN = -1;
     static constexpr int LEDC_FREQ = 5000;
 
-    Arduino_DataBus *_bus;
-    Arduino_GFX *_tft;
+    LGFX * _panel;
     static void fadeInTask(void *param);
     
 };

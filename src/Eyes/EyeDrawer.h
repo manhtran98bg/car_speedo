@@ -131,6 +131,7 @@ public:
       {
         // u8g2.drawHLine(x0, y0 - y, x);
         Screen.drawFastHLine(x0, y0 - y, x, color);
+        
         if (s >= 0)
         {
           s += fx2 * (1 - y);
@@ -240,26 +241,18 @@ public:
     int32_t b = max(y0, y1);
     int32_t w = r - l;
     int32_t h = b - t;
-    // u8g2.setDrawColor(color);
-    // u8g2.drawBox(l, t, w, h);
-    // u8g2.setDrawColor(1);
-    uint16_t fillColor = (color == 0) ? BLACK : WHITE;
+    uint16_t fillColor = (color == 0) ? 0x0000 : 0xFFFF;
     Screen.fillRect(l, t, w, h, (uint16_t) color);
   }
 
   static void FillRectangularTriangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t color)
   {
-    // u8g2.setDrawColor(color);
-    // u8g2.drawTriangle(x0, y0, x1, y1, x1, y0);
-    // u8g2.setDrawColor(1);
     Screen.fillTriangle(x0, y0, x1, y1, x1, y0, color);
   }
 
   static void FillTriangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t color)
   {
-    // u8g2.setDrawColor(color);
-    // u8g2.drawTriangle(x0, y0, x1, y1, x2, y2);
-    // u8g2.setDrawColor(1);
+
     Screen.fillTriangle(x0, y0, x1, y1, x2, y2, color);
   }
 };

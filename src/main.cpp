@@ -16,6 +16,11 @@
 #include "Services/audio_player.h"
 #include "Services/mjpeg_player.h"
 
+#include "Eyes/Face.h"
+
+#include <LovyanGFX.hpp>
+#include "LGFX_Screen.hpp"
+
 /*mjpeg & SD Card*/
 #define MJPEG_FILENAME "/video/splash.mjpeg"
 
@@ -29,7 +34,10 @@ static int displayBack(JPEGDRAW *pDraw);
 MjpegPlayer *videoPlayer;
 AudioPlayer *audioPlayer;
 
+Face face(240, 240, 60);
+
 // Audio audio;
+
 
 static int displayBack(JPEGDRAW *pDraw)
 {
@@ -75,23 +83,39 @@ void setup()
 	Serial.println(esp_get_idf_version());
 	fsInit();
 	Screen.begin();
-	videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
-	audioPlayer = new AudioPlayer();
-	videoPlayer->begin(1);
-	audioPlayer->begin(0);
-	videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
-	videoPlayer->playFile(splash_video_file);
-	audioPlayer->playFile(splash_audio_file);
+	face.RandomBehavior = true;
+	face.RandomBlink = true;
+	face.RandomLook = true;
+	// videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
+	// audioPlayer = new AudioPlayer();
+	// videoPlayer->begin(1);
+	// audioPlayer->begin(0);
+	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
+	// videoPlayer->playFile(splash_video_file);
+	// audioPlayer->playFile(splash_audio_file);
+
+	// lcd.init();
+	// lcd.setRotation(0);
+	// lcd.setColorDepth(16);
+	// lcd.fillScreen(lcd.color565(0, 0, 0));
+	// lcd.setTextColor(0);
+	// lcd.setFont(&fonts::Font4);
+	// lcd.drawString("string!", 50, 50);
+	// sprite.setColorDepth(1);
+	// sprite.createSprite(240, 240);
+	// sprite.drawRect(0, 0, 65, 65, 1);
+	// sprite.pushSprite(120, 120);
 }
 
 void loop()
 {
-	if (millis() - lastCmd > 30000)
-	{
-		lastCmd = millis();
-		size_t idx = (size_t)(esp_random() % 10 + 1);
-		char path[32];
-		sprintf(path, "/gif/%d.gif", idx);
-		gif_request_show(path);
-	}
+	// if (millis() - lastCmd > 30000)
+	// {
+	// 	lastCmd = millis();
+	// 	size_t idx = (size_t)(esp_random() % 10 + 1);
+	// 	char path[32];
+	// 	sprintf(path, "/gif/%d.gif", idx);
+	// 	gif_request_show(path);
+	// }
+	face.Update();
 }

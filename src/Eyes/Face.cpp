@@ -81,7 +81,7 @@ void Face::Update()
 
 void Face::Draw()
 {
-	Screen.fillScreen(BLACK);
+	Screen.fillScreen(0);
 	// Draw left eye
 	LeftEye.CenterX = CenterX - EyeSize / 2 - EyeInterDistance;
 	LeftEye.CenterY = CenterY;
@@ -90,5 +90,5 @@ void Face::Draw()
 	RightEye.CenterX = CenterX + EyeSize / 2 + EyeInterDistance;
 	RightEye.CenterY = CenterY;
 	RightEye.Draw();
-	Screen.flush();
+	Screen.pushSprite(0,0);
 }
