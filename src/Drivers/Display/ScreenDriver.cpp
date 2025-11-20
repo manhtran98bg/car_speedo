@@ -19,6 +19,7 @@ void ScreenDriver::begin()
     Serial.println("Screen init");
     _panel->init();
     _panel->setRotation(0);
+    _panel->setSwapBytes(true);
     _panel->fillScreen(BLACK);
 
     if (BACKLIGHT_PIN != -1)
@@ -86,7 +87,7 @@ void ScreenDriver::deleteSprite(int id)
 
 void ScreenDriver::drawRect(uint16_t *data, int16_t x, int16_t y, int16_t w, int16_t h)
 {
-    _panel->pushImage(x, y, w, h, data);
+    _panel->pushImageDMA(x, y, w, h, data);
 }
 
 void ScreenDriver::drawRegion(uint16_t *data, int16_t x1, int16_t y1, int16_t x2, int16_t y2)
@@ -94,7 +95,7 @@ void ScreenDriver::drawRegion(uint16_t *data, int16_t x1, int16_t y1, int16_t x2
     int w = x2 - x1 + 1;
     int h = y2 - y1 + 1;
     if (w > 0 && h > 0)
-        _panel->pushImage(x1, y1, w, h, data);
+        _panel->pushImageDMA(x1, y1, w, h, data);
 }
 
 //===== Fade Task =======================================================

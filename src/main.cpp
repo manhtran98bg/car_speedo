@@ -80,13 +80,13 @@ void setup()
 	Serial.println(esp_get_idf_version());
 	fsInit();
 	Screen.begin();
-	int id = Screen.createSprite(120, 120, 1);
-	canvas = new CanvasImpl(&Screen, id);
-	face = new Face(canvas, 60, 240, 240, BLACK, YELLOW);
-	auto panel = Screen.getPanel();
-	panel->setTextColor(RED);
-	panel->setFont(&Font4);
-	panel->drawString("Hello", 60, 0);
+	// int id = Screen.createSprite(120, 120, 1);
+	// canvas = new CanvasImpl(&Screen, id);
+	// face = new Face(canvas, 60, 240, 240, BLACK, YELLOW);
+	// auto panel = Screen.getPanel();
+	// panel->setTextColor(RED);
+	// panel->setFont(&Font4);
+	// panel->drawString("Hello", 60, 0);
 	// videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
 	// audioPlayer = new AudioPlayer();
 	// videoPlayer->begin(1);
@@ -94,6 +94,7 @@ void setup()
 	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
 	// videoPlayer->playFile(splash_video_file);
 	// audioPlayer->playFile(splash_audio_file);
+	main_view_init();
 }
 
 void loop()
@@ -106,5 +107,5 @@ void loop()
 	// 	sprintf(path, "/gif/%d.gif", idx);
 	// 	gif_request_show(path);
 	// }
-	face->Update();
+	// face->Update();
 }
