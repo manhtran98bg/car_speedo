@@ -15,11 +15,11 @@ public:
 
     virtual void push(int x, int y) = 0;
 
-    virtual int32_t width(void) const;
-    virtual int32_t height(void) const;
+    virtual int32_t width(void) const = 0;
+    virtual int32_t height(void) const = 0;
 
-    virtual void setBackgroundColor(uint16_t color);
-    virtual void setForegroundColor(uint16_t color);
+    virtual void setBackgroundColor(uint16_t color) = 0;
+    virtual void setForegroundColor(uint16_t color) = 0;
 
     virtual ~ICanvas() {}
 };

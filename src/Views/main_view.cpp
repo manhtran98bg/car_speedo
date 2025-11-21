@@ -9,8 +9,8 @@
 #include "Drivers/Display/ScreenDriver.h"
 #include "gif_view.h"
 
-#include "Eyes/Adapter/CanvasImpl.h"
-#include "Eyes/Adapter/CanvasManager.hpp"
+#include "Eyes/Adapter/CanvasLvgl.h"
+#include "Eyes/Adapter/CanvasManagerLvgl.h"
 #include "Eyes/Face.h"
 
 // ==== Display driver ==== //
@@ -87,9 +87,9 @@ static void updateData_task(void *param)
         vTaskDelay(200);
     }
 }
-CanvasManager *canvasManager = new CanvasManager();
+ICanvasManager *canvasManager = new CanvasManagerLvgl();
 Face *face;
-CanvasLvImpl *canvas;
+ICanvas *canvas;
 static void mainUi_task(void *param)
 {
     while (true)
@@ -117,12 +117,13 @@ static void updateFaceTask(void *param)
 }
 static void test_canvas()
 {
-    int id = canvasManager->createCanvas(120, 120);
+    int id = canvasManager->createCanvas(120, 120, (int)LV_IMG_CF_INDEXED_1BIT);
     if (id == -1 ) {
         Serial.println("Create canvas failed");
         return;
     }
-    CanvasLvImpl *canvas = new CanvasLvImpl(canvasManager, id);
+    // CanvasLvImpl *canvas = new CanvasLvImpl(canvasManager, id);
+    canvas = canvasManager->getCanvasWrapper(id);
     if (canvas) {
         face = new Face(canvas, 50, 240, 240, BLACK, YELLOW);
         xTaskCreate(updateFaceTask, "updateFaceTask", 4096, NULL, configMAX_PRIORITIES - 1, NULL);

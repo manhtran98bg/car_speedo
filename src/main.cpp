@@ -18,8 +18,6 @@
 #include "Eyes/Face.h"
 #include "Drivers/Display/ScreenDriver.h"
 
-#include "Eyes/Adapter/CanvasImpl.h"
-#include "Eyes/Adapter/CanvasManager.hpp"
 
 
 /*mjpeg & SD Card*/

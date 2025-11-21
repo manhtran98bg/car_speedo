@@ -1,7 +1,7 @@
-#include "CanvasImpl.h"
-#include "CanvasManager.hpp"
-
-static int32_t _clip_l = 0, _clip_r = 119, _clip_t = 0, _clip_b = 119; // clip rect
+#include "CanvasLvgl.h"
+#include "ICanvasManager.h"
+#include "lvgl.h"
+#include "Arduino.h"
 
 static inline lv_color_t lv_color_from565(uint16_t c)
 {
@@ -12,7 +12,6 @@ static inline lv_color_t lv_color_from565(uint16_t c)
     r = (r * 527 + 23) >> 6; // convert 5-bit → 8-bit
     g = (g * 259 + 33) >> 6; // convert 6-bit → 8-bit
     b = (b * 527 + 23) >> 6; // convert 5-bit → 8-bit
-    Serial.printf("Color r %d, g %d, b %d\n", r, g, b);
     return lv_color_make(r, g, b);
 }
 
@@ -26,7 +25,14 @@ static inline bool _adjust_abs(int32_t &x, int32_t &w)
     return !w;
 }
 
-static bool _clipping(int32_t &x, int32_t &y, int32_t &w, int32_t &h)
+CanvasLvgl::CanvasLvgl(ICanvasManager *canvasManager, int id)
+    : _canvasManager(canvasManager), _id(id)
+{
+    _clip_r = width();
+    _clip_b = height();
+}
+
+bool CanvasLvgl::clipping(int32_t &x, int32_t &y, int32_t &w, int32_t &h)
 {
     auto cl = _clip_l;
     if (x < cl)
@@ -55,92 +61,11 @@ static bool _clipping(int32_t &x, int32_t &y, int32_t &w, int32_t &h)
     return true;
 }
 
-void CanvasImpl::FillRectangle(int32_t x0, int32_t y0,
+void CanvasLvgl::FillRectangle(int32_t x0, int32_t y0,
                                int32_t w, int32_t h,
                                uint16_t color)
 {
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->fillRect(x0, y0, w, h, color);
-}
-
-void CanvasImpl::FillTriangle(int32_t x0, int32_t y0,
-                              int32_t x1, int32_t y1,
-                              int32_t x2, int32_t y2,
-                              uint16_t color)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->fillTriangle(x0, y0, x1, y1, x2, y2, color);
-}
-void CanvasImpl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16_t color)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->drawLine(x0, y0, x1, y1, color);
-}
-void CanvasImpl::drawFastHLine(int32_t x, int32_t y, int32_t w,
-                               uint16_t color)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->drawFastHLine(x, y, w, color);
-}
-
-void CanvasImpl::clear(uint16_t color)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->fillScreen(color);
-}
-void CanvasImpl::push(int x, int y)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->pushSprite(x, y);
-}
-int32_t CanvasImpl::width() const
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return 0;
-    return spr->width();
-}
-
-int32_t CanvasImpl::height() const
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return 0;
-    return spr->height();
-}
-
-void CanvasImpl::setBackgroundColor(uint16_t color)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->setPaletteColor(0, color);
-}
-void CanvasImpl::setForegroundColor(uint16_t color)
-{
-    LGFX_Sprite *spr = _driver->getSprite(_id);
-    if (!spr)
-        return;
-    spr->setPaletteColor(1, color);
-}
-
-void CanvasLvImpl::FillRectangle(int32_t x0, int32_t y0,
-                                 int32_t w, int32_t h,
-                                 uint16_t color)
-{
-    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    lv_obj_t *canvas = (lv_obj_t *)_canvasManager->getCanvas(_id);
     if (!canvas)
     {
         Serial.println("canvas is null");
@@ -155,8 +80,9 @@ void CanvasLvImpl::FillRectangle(int32_t x0, int32_t y0,
     _adjust_abs(x0, w);
     _adjust_abs(y0, h);
 
-    lv_color_t fillColor = (color) ? _fgColor : _bgColor;
-    _clipping(x0, y0, w, h);
+    lv_color_t fillColor;
+    fillColor.full = color;
+    clipping(x0, y0, w, h);
 
     for (int j = y0; j <= y0 + h; j++)
     {
@@ -167,7 +93,7 @@ void CanvasLvImpl::FillRectangle(int32_t x0, int32_t y0,
     }
 }
 
-void CanvasLvImpl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16_t color)
+void CanvasLvgl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16_t color)
 {
     bool steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -252,13 +178,13 @@ void CanvasLvImpl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint
             FillRectangle(xs, y0, dlen, 1, color);
     }
 }
-void CanvasLvImpl::FillTriangle(int32_t x0, int32_t y0,
-                                int32_t x1, int32_t y1,
-                                int32_t x2, int32_t y2,
-                                uint16_t color)
+void CanvasLvgl::FillTriangle(int32_t x0, int32_t y0,
+                              int32_t x1, int32_t y1,
+                              int32_t x2, int32_t y2,
+                              uint16_t color)
 {
 
-    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    lv_obj_t *canvas = (lv_obj_t *)_canvasManager->getCanvas(_id);
     if (!canvas)
     {
         Serial.println("canvas is null");
@@ -391,10 +317,10 @@ void CanvasLvImpl::FillTriangle(int32_t x0, int32_t y0,
     } while (++y0 <= y2);
 }
 
-void CanvasLvImpl::drawFastHLine(int32_t x, int32_t y, int32_t w,
-                                 uint16_t color)
+void CanvasLvgl::drawFastHLine(int32_t x, int32_t y, int32_t w,
+                               uint16_t color)
 {
-    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    lv_obj_t *canvas = (lv_obj_t *)_canvasManager->getCanvas(_id);
     if (!canvas)
     {
         Serial.println("canvas is null");
@@ -424,7 +350,7 @@ void CanvasLvImpl::drawFastHLine(int32_t x, int32_t y, int32_t w,
     FillRectangle(x, y, w, 1, color);
 }
 
-void CanvasLvImpl::clear(uint16_t color)
+void CanvasLvgl::clear(uint16_t color)
 {
     int w = width();
     int h = height();
@@ -435,39 +361,41 @@ void CanvasLvImpl::clear(uint16_t color)
     }
     FillRectangle(0, 0, 120, 120, 0);
 }
-void CanvasLvImpl::push(int x, int y)
+void CanvasLvgl::push(int x, int y)
 {
-    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    lv_obj_t *canvas = (lv_obj_t *)_canvasManager->getCanvas(_id);
     if (!canvas)
         return;
     lv_obj_invalidate(canvas);
     lv_obj_set_pos(canvas, x, y);
 }
-int32_t CanvasLvImpl::width() const
+int32_t CanvasLvgl::width() const
 {
     return _canvasManager->getWidth(_id);
 }
 
-int32_t CanvasLvImpl::height() const
+int32_t CanvasLvgl::height() const
 {
     return _canvasManager->getHeight(_id);
 }
 
-void CanvasLvImpl::setBackgroundColor(uint16_t color)
+void CanvasLvgl::setBackgroundColor(uint16_t color)
 {
-    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+
+    lv_obj_t *canvas = (lv_obj_t *)_canvasManager->getCanvas(_id);
     if (!canvas)
         return;
     lv_canvas_set_palette(canvas, 0, lv_color_from565(color));
-    _bgColor.full = 0;
-    lv_canvas_fill_bg(canvas, _bgColor, LV_OPA_COVER);
-    // lv_obj_center(canvas);
+    _bgColor565 = color;
+    lv_color_t c;
+    c.full = 0;
+    lv_canvas_fill_bg(canvas, c, LV_OPA_COVER);
 }
-void CanvasLvImpl::setForegroundColor(uint16_t color)
+void CanvasLvgl::setForegroundColor(uint16_t color)
 {
-    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    lv_obj_t *canvas = (lv_obj_t *)_canvasManager->getCanvas(_id);
     if (!canvas)
         return;
     lv_canvas_set_palette(canvas, 1, lv_color_from565(color));
-    _fgColor.full = 1;
+    _fgColor565 = color;
 }
