@@ -9,9 +9,9 @@
 #include "Drivers/Display/ScreenDriver.h"
 #include "gif_view.h"
 
-#include "Eyes/Adapter/CanvasLvgl.h"
-#include "Eyes/Adapter/CanvasManagerLvgl.h"
-#include "Eyes/Face.h"
+#include "Adapter/CanvasLvgl.h"
+#include "Adapter/CanvasManagerLvgl.h"
+#include "Face.h"
 
 // ==== Display driver ==== //
 static lv_disp_draw_buf_t draw_buf;
@@ -122,7 +122,6 @@ static void test_canvas()
         Serial.println("Create canvas failed");
         return;
     }
-    // CanvasLvImpl *canvas = new CanvasLvImpl(canvasManager, id);
     canvas = canvasManager->getCanvasWrapper(id);
     if (canvas) {
         face = new Face(canvas, 50, 240, 240, BLACK, YELLOW);
