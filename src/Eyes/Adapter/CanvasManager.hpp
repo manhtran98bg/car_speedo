@@ -30,7 +30,6 @@ public:
 
     ~CanvasManager()
     {
-        // cleanup toàn bộ buffer + object
         for (int i = 0; i < MAX_CANVAS; i++)
         {
             if (_entry[i].obj)
@@ -67,7 +66,6 @@ public:
                 }
 
                 lv_canvas_set_buffer(canvas, buf, w, h, cf);
-
                 _entry[i].obj = canvas;
                 _entry[i].buffer = buf;
                 _entry[i].w = w;
@@ -97,7 +95,7 @@ public:
 
     lv_obj_t *getCanvas(int id) const
     {
-        Serial.printf("get canvas with id %d\n", id);
+        // Serial.printf("get canvas with id %d\n", id);
         return valid(id) ? _entry[id].obj : nullptr;
     }
 
@@ -105,7 +103,14 @@ public:
     {
         return valid(id) ? _entry[id].buffer : nullptr;
     }
-
+    int getWidth(int id) const 
+    {
+        return valid(id) ? _entry[id].w : -1;
+    }
+    int getHeight(int id) const 
+    {
+        return valid(id) ? _entry[id].h : -1;
+    }
 private:
     size_t getBufferSize(int w, int h, lv_img_cf_t cf) const
     {

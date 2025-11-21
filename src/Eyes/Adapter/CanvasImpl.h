@@ -1,7 +1,9 @@
+#pragma once
 #include "Canvas.h"
 #include "Drivers/Display/ScreenDriver.h"
 #include "CanvasManager.hpp"
 #include "lvgl.h"
+
 
 class CanvasImpl : public ICanvas {
 public:
@@ -9,7 +11,7 @@ public:
         : _driver(driver), _id(spriteId) {}
 
     void FillRectangle(int32_t x0, int32_t y0,
-                       int32_t x1, int32_t y1,
+                       int32_t w, int32_t h,
                        uint16_t color) override;
 
 
@@ -17,7 +19,7 @@ public:
                       int32_t x1, int32_t y1,
                       int32_t x2, int32_t y2,
                       uint16_t color) override;
-
+    void drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16_t color) override;
     void drawFastHLine(int32_t x, int32_t y, int32_t w,
                        uint16_t color) override;
     
@@ -54,6 +56,8 @@ public:
                       int32_t x1, int32_t y1,
                       int32_t x2, int32_t y2,
                       uint16_t color) override;
+    void drawLine(int32_t x0, int32_t y0, 
+                    int32_t x1, int32_t y1, uint16_t color) override;
 
     void drawFastHLine(int32_t x, int32_t y,
                        int32_t w, uint16_t color) override;
@@ -70,6 +74,7 @@ public:
 
 private:
     CanvasManager *_canvasManager;
+    int32_t _clip_l = 0, _clip_r = -1, _clip_t = 0, _clip_b = -1;
     int _id;
     lv_color_t _fgColor;
     lv_color_t _bgColor;

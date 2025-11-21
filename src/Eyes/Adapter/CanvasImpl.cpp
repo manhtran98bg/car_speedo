@@ -1,6 +1,8 @@
 #include "CanvasImpl.h"
 #include "CanvasManager.hpp"
 
+static int32_t _clip_l = 0, _clip_r = 119, _clip_t = 0, _clip_b = 119; // clip rect
+
 static inline lv_color_t lv_color_from565(uint16_t c)
 {
     uint8_t r = (c >> 11) & 0x1F; // 5 bit red
@@ -14,14 +16,53 @@ static inline lv_color_t lv_color_from565(uint16_t c)
     return lv_color_make(r, g, b);
 }
 
+static inline bool _adjust_abs(int32_t &x, int32_t &w)
+{
+    if (w < 0)
+    {
+        x += w;
+        w = -w;
+    }
+    return !w;
+}
+
+static bool _clipping(int32_t &x, int32_t &y, int32_t &w, int32_t &h)
+{
+    auto cl = _clip_l;
+    if (x < cl)
+    {
+        w += x - cl;
+        x = cl;
+    }
+    auto cr = _clip_r + 1 - x;
+    if (w > cr)
+        w = cr;
+    if (w < 1)
+        return false;
+
+    auto ct = _clip_t;
+    if (y < ct)
+    {
+        h += y - ct;
+        y = ct;
+    }
+    auto cb = _clip_b + 1 - y;
+    if (h > cb)
+        h = cb;
+    if (h < 1)
+        return false;
+
+    return true;
+}
+
 void CanvasImpl::FillRectangle(int32_t x0, int32_t y0,
-                               int32_t x1, int32_t y1,
+                               int32_t w, int32_t h,
                                uint16_t color)
 {
     LGFX_Sprite *spr = _driver->getSprite(_id);
     if (!spr)
         return;
-    spr->fillRect(x0, y0, x1, y1, color);
+    spr->fillRect(x0, y0, w, h, color);
 }
 
 void CanvasImpl::FillTriangle(int32_t x0, int32_t y0,
@@ -34,7 +75,13 @@ void CanvasImpl::FillTriangle(int32_t x0, int32_t y0,
         return;
     spr->fillTriangle(x0, y0, x1, y1, x2, y2, color);
 }
-
+void CanvasImpl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16_t color)
+{
+    LGFX_Sprite *spr = _driver->getSprite(_id);
+    if (!spr)
+        return;
+    spr->drawLine(x0, y0, x1, y1, color);
+}
 void CanvasImpl::drawFastHLine(int32_t x, int32_t y, int32_t w,
                                uint16_t color)
 {
@@ -90,7 +137,261 @@ void CanvasImpl::setForegroundColor(uint16_t color)
 }
 
 void CanvasLvImpl::FillRectangle(int32_t x0, int32_t y0,
-                                 int32_t x1, int32_t y1,
+                                 int32_t w, int32_t h,
+                                 uint16_t color)
+{
+    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    if (!canvas)
+    {
+        Serial.println("canvas is null");
+        return;
+    }
+    lv_img_dsc_t *dsc = lv_canvas_get_img(canvas);
+    if (!dsc)
+    {
+        Serial.println("canvas img desc null");
+        return;
+    }
+    _adjust_abs(x0, w);
+    _adjust_abs(y0, h);
+
+    lv_color_t fillColor = (color) ? _fgColor : _bgColor;
+    _clipping(x0, y0, w, h);
+
+    for (int j = y0; j <= y0 + h; j++)
+    {
+        for (int i = x0; i <= x0 + w; i++)
+        {
+            lv_img_buf_set_px_color(dsc, i, j, fillColor);
+        }
+    }
+}
+
+void CanvasLvImpl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16_t color)
+{
+    bool steep = abs(y1 - y0) > abs(x1 - x0);
+
+    int32_t xstart = _clip_l;
+    int32_t ystart = _clip_t;
+    int32_t xend = _clip_r;
+    int32_t yend = _clip_b;
+
+    if (steep)
+    {
+        std::swap(xstart, ystart);
+        std::swap(xend, yend);
+        std::swap(x0, y0);
+        std::swap(x1, y1);
+    }
+    if (x0 > x1)
+    {
+        std::swap(x0, x1);
+        std::swap(y0, y1);
+    }
+    if (x0 > xend || x1 < xstart)
+        return;
+    xend = std::min(x1, xend);
+
+    int32_t dy = abs(y1 - y0);
+    int32_t ystep = (y1 > y0) ? 1 : -1;
+    int32_t dx = x1 - x0;
+    int32_t err = dx >> 1;
+
+    while (x0 < xstart || y0 < ystart || y0 > yend)
+    {
+        err -= dy;
+        if (err < 0)
+        {
+            err += dx;
+            y0 += ystep;
+        }
+        if (++x0 > xend)
+            return;
+    }
+    int32_t xs = x0;
+    int32_t dlen = 0;
+    if (ystep < 0)
+        std::swap(ystart, yend);
+    yend += ystep;
+    if (steep)
+    {
+        do
+        {
+            ++dlen;
+            if ((err -= dy) < 0)
+            {
+                FillRectangle(y0, xs, 1, dlen, color);
+                err += dx;
+                xs = x0 + 1;
+                dlen = 0;
+                y0 += ystep;
+                if (y0 == yend)
+                    break;
+            }
+        } while (++x0 <= xend);
+        if (dlen)
+            FillRectangle(y0, xs, 1, dlen, color);
+    }
+    else
+    {
+        do
+        {
+            ++dlen;
+            if ((err -= dy) < 0)
+            {
+                FillRectangle(xs, y0, dlen, 1, color);
+                err += dx;
+                xs = x0 + 1;
+                dlen = 0;
+                y0 += ystep;
+                if (y0 == yend)
+                    break;
+            }
+        } while (++x0 <= xend);
+        if (dlen)
+            FillRectangle(xs, y0, dlen, 1, color);
+    }
+}
+void CanvasLvImpl::FillTriangle(int32_t x0, int32_t y0,
+                                int32_t x1, int32_t y1,
+                                int32_t x2, int32_t y2,
+                                uint16_t color)
+{
+
+    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    if (!canvas)
+    {
+        Serial.println("canvas is null");
+        return;
+    }
+
+    lv_img_dsc_t *dsc = lv_canvas_get_img(canvas);
+    if (!dsc)
+    {
+        Serial.println("canvas img desc null");
+        return;
+    }
+
+    int32_t a, b;
+
+    // Sort coordinates by Y order (y2 >= y1 >= y0)
+    if (y0 > y1)
+    {
+        std::swap(y0, y1);
+        std::swap(x0, x1);
+    }
+    if (y1 > y2)
+    {
+        std::swap(y2, y1);
+        std::swap(x2, x1);
+    }
+    if (y0 > y1)
+    {
+        std::swap(y0, y1);
+        std::swap(x0, x1);
+    }
+
+    if (y0 == y2)
+    { // Handle awkward all-on-same-line case as its own thing
+        a = b = x0;
+        if (x1 < a)
+            a = x1;
+        else if (x1 > b)
+            b = x1;
+        if (x2 < a)
+            a = x2;
+        else if (x2 > b)
+            b = x2;
+        drawFastHLine(a, y0, b - a + 1, color);
+        return;
+    }
+    if ((x1 - x0) * (y2 - y0) == (x2 - x0) * (y1 - y0))
+    {
+        drawLine(x0, y0, x2, y2, color);
+        return;
+    }
+
+    int32_t dy1 = y1 - y0;
+    int32_t dy2 = y2 - y0;
+    bool change = ((x1 - x0) * dy2 > (x2 - x0) * dy1);
+    int32_t dx1 = abs(x1 - x0);
+    int32_t dx2 = abs(x2 - x0);
+    int32_t xstep1 = x1 < x0 ? -1 : 1;
+    int32_t xstep2 = x2 < x0 ? -1 : 1;
+    a = b = x0;
+    if (change)
+    {
+        std::swap(dx1, dx2);
+        std::swap(dy1, dy2);
+        std::swap(xstep1, xstep2);
+    }
+    int32_t err1 = (std::max(dx1, dy1) >> 1) + (xstep1 < 0
+                                                    ? std::min(dx1, dy1)
+                                                    : dx1);
+    int32_t err2 = (std::max(dx2, dy2) >> 1) + (xstep2 > 0
+                                                    ? std::min(dx2, dy2)
+                                                    : dx2);
+    if (y0 != y1)
+    {
+        do
+        {
+            err1 -= dx1;
+            while (err1 < 0)
+            {
+                err1 += dy1;
+                a += xstep1;
+            }
+            err2 -= dx2;
+            while (err2 < 0)
+            {
+                err2 += dy2;
+                b += xstep2;
+            }
+            drawFastHLine(a, y0, b - a + 1, color);
+        } while (++y0 < y1);
+    }
+
+    if (change)
+    {
+        b = x1;
+        xstep2 = x2 < x1 ? -1 : 1;
+        dx2 = abs(x2 - x1);
+        dy2 = y2 - y1;
+        err2 = (std::max(dx2, dy2) >> 1) + (xstep2 > 0
+                                                ? std::min(dx2, dy2)
+                                                : dx2);
+    }
+    else
+    {
+        a = x1;
+        dx1 = abs(x2 - x1);
+        dy1 = y2 - y1;
+        xstep1 = x2 < x1 ? -1 : 1;
+        err1 = (std::max(dx1, dy1) >> 1) + (xstep1 < 0
+                                                ? std::min(dx1, dy1)
+                                                : dx1);
+    }
+    do
+    {
+        err1 -= dx1;
+        while (err1 < 0)
+        {
+            err1 += dy1;
+            if ((a += xstep1) == x2)
+                break;
+        }
+        err2 -= dx2;
+        while (err2 < 0)
+        {
+            err2 += dy2;
+            if ((b += xstep2) == x2)
+                break;
+        }
+        drawFastHLine(a, y0, b - a + 1, color);
+    } while (++y0 <= y2);
+}
+
+void CanvasLvImpl::drawFastHLine(int32_t x, int32_t y, int32_t w,
                                  uint16_t color)
 {
     lv_obj_t *canvas = _canvasManager->getCanvas(_id);
@@ -100,74 +401,56 @@ void CanvasLvImpl::FillRectangle(int32_t x0, int32_t y0,
         return;
     }
 
-    // uint32_t x;
-    // uint32_t y;
-    // for (y = 10; y < 30; y++)
-    // {
-    //     for (x = 5; x < 20; x++)
-    //     {
-    //         lv_canvas_set_px_color(canvas, x, y, _fgColor);
-    //     }
-    // }
-    int16_t  w = x1 - x0;
-    int16_t  h = y1 - y0;
-    lv_color_t fillColor = (color) ? _fgColor : _bgColor;
+    lv_img_dsc_t *dsc = lv_canvas_get_img(canvas);
+    if (!dsc)
+    {
+        Serial.println("canvas img desc null");
+        return;
+    }
 
-    lv_draw_rect_dsc_t rect_dsc;
-    lv_draw_rect_dsc_init(&rect_dsc);
-    rect_dsc.radius = 0;
-    rect_dsc.bg_opa = LV_OPA_COVER;
-    rect_dsc.bg_color = lv_palette_main(LV_PALETTE_BLUE);
-    rect_dsc.border_width = 2;
-    rect_dsc.border_opa = LV_OPA_90;
-    rect_dsc.border_color = lv_palette_main(LV_PALETTE_BLUE);;
-    rect_dsc.shadow_width = 5;
-    rect_dsc.shadow_ofs_x = 5;
-    rect_dsc.shadow_ofs_y = 5;
-    Serial.printf("rect %d %d %d %d\n", x0, y0, w, h);
-    lv_canvas_draw_rect(canvas, x0, y0, w, h, &rect_dsc);
-    lv_obj_center(canvas);
-    // spr->fillRect(x0, y0, x1, y1, color);
-}
-
-void CanvasLvImpl::FillTriangle(int32_t x0, int32_t y0,
-                                int32_t x1, int32_t y1,
-                                int32_t x2, int32_t y2,
-                                uint16_t color)
-{
-    // LGFX_Sprite *spr = _driver->getSprite(_id);
-    // if (!spr)
-    //     return;
-    // spr->fillTriangle(x0, y0, x1, y1, x2, y2, color);
-}
-
-void CanvasLvImpl::drawFastHLine(int32_t x, int32_t y, int32_t w,
-                                 uint16_t color)
-{
-    // LGFX_Sprite *spr = _driver->getSprite(_id);
-    // if (!spr)
-    //     return;
-    // spr->drawFastHLine(x, y, w, color);
+    if (y < _clip_t || y > _clip_b)
+        return;
+    auto cl = _clip_l;
+    if (x < cl)
+    {
+        w += x - cl;
+        x = cl;
+    }
+    auto cr = _clip_r + 1 - x;
+    if (w > cr)
+        w = cr;
+    if (w < 1)
+        return;
+    FillRectangle(x, y, w, 1, color);
 }
 
 void CanvasLvImpl::clear(uint16_t color)
 {
+    int w = width();
+    int h = height();
+    if (w < 0 || h < 0)
+    {
+        Serial.println("clear failed ");
+        return;
+    }
+    FillRectangle(0, 0, 120, 120, 0);
 }
 void CanvasLvImpl::push(int x, int y)
 {
+    lv_obj_t *canvas = _canvasManager->getCanvas(_id);
+    if (!canvas)
+        return;
+    lv_obj_invalidate(canvas);
+    lv_obj_set_pos(canvas, x, y);
 }
 int32_t CanvasLvImpl::width() const
 {
-    // lv_obj_t *canvas = _canvasManager->getCanvas(_id);
-    // if (!canvas)
-    return 0;
+    return _canvasManager->getWidth(_id);
 }
 
 int32_t CanvasLvImpl::height() const
 {
-    // lv_obj_t *canvas = _canvasManager->getCanvas(_id);
-    // if (!canvas)
-    return 0;
+    return _canvasManager->getHeight(_id);
 }
 
 void CanvasLvImpl::setBackgroundColor(uint16_t color)
@@ -178,6 +461,7 @@ void CanvasLvImpl::setBackgroundColor(uint16_t color)
     lv_canvas_set_palette(canvas, 0, lv_color_from565(color));
     _bgColor.full = 0;
     lv_canvas_fill_bg(canvas, _bgColor, LV_OPA_COVER);
+    // lv_obj_center(canvas);
 }
 void CanvasLvImpl::setForegroundColor(uint16_t color)
 {

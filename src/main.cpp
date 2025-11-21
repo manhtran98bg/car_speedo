@@ -18,6 +18,10 @@
 #include "Eyes/Face.h"
 #include "Drivers/Display/ScreenDriver.h"
 
+#include "Eyes/Adapter/CanvasImpl.h"
+#include "Eyes/Adapter/CanvasManager.hpp"
+
+
 /*mjpeg & SD Card*/
 #define MJPEG_FILENAME "/video/splash.mjpeg"
 
@@ -31,8 +35,7 @@ static int displayBack(JPEGDRAW *pDraw);
 MjpegPlayer *videoPlayer;
 AudioPlayer *audioPlayer;
 
-Face *face;
-CanvasImpl *canvas;
+
 // Audio audio;
 
 
@@ -66,6 +69,7 @@ void fsInit()
 	}
 	Serial.println("File system initialized.");
 }
+
 void setup()
 {
 	delay(2000);
@@ -80,8 +84,16 @@ void setup()
 	Serial.println(esp_get_idf_version());
 	fsInit();
 	Screen.begin();
+	main_view_init();
 	// int id = Screen.createSprite(120, 120, 1);
 	// canvas = new CanvasImpl(&Screen, id);
+	// int id = canvasManager->createCanvas(120, 120);
+    // if (id == -1 ) {
+    //     Serial.println("Create canvas failed");
+    //     return;
+    // }
+    // canvas = new CanvasLvImpl(canvasManager, id);
+	// canvas->push(60,60);
 	// face = new Face(canvas, 60, 240, 240, BLACK, YELLOW);
 	// auto panel = Screen.getPanel();
 	// panel->setTextColor(RED);
@@ -94,7 +106,7 @@ void setup()
 	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
 	// videoPlayer->playFile(splash_video_file);
 	// audioPlayer->playFile(splash_audio_file);
-	main_view_init();
+	
 }
 
 void loop()
