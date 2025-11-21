@@ -111,13 +111,12 @@ static void updateFaceTask(void *param)
 {
     while (true)
     {
-        
-        vTaskDelay(pdMS_TO_TICKS(5));
+        vTaskDelay(pdMS_TO_TICKS(15));
     }
 }
 static void test_canvas()
 {
-    int id = canvasManager->createCanvas(120, 120, (int)LV_IMG_CF_INDEXED_1BIT);
+    int id = canvasManager->createCanvas(160, 160, (int)LV_IMG_CF_INDEXED_1BIT);
     if (id == -1 ) {
         Serial.println("Create canvas failed");
         return;
@@ -142,8 +141,9 @@ void main_view_init()
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = true;
     lv_disp_drv_register(&disp_drv);
+
+    ui_init();
     test_canvas();
-    // ui_init();
     // gif_view_init();
     // lv_disp_set_bg_color(lv_disp_get_default(), PALETTE_RED);
     // lv_draw_rect_dsc_t rect_dsc;

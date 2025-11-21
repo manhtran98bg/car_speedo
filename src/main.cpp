@@ -15,7 +15,6 @@
 #include "Services/audio_player.h"
 #include "Services/mjpeg_player.h"
 
-#include "Eyes/Face.h"
 #include "Drivers/Display/ScreenDriver.h"
 
 
