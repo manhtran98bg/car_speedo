@@ -8,11 +8,11 @@ class CanvasLvgl : public ICanvas {
 public:
     CanvasLvgl(ICanvasManager *canvasManager, int id);
 
-    void FillRectangle(int32_t x0, int32_t y0,
+    void drawFillRectangle(int32_t x0, int32_t y0,
                        int32_t x1, int32_t y1,
                        uint16_t color) override;
 
-    void FillTriangle(int32_t x0, int32_t y0,
+    void drawFillTriangle(int32_t x0, int32_t y0,
                       int32_t x1, int32_t y1,
                       int32_t x2, int32_t y2,
                       uint16_t color) override;

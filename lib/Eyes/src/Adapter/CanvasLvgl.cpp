@@ -61,7 +61,7 @@ bool CanvasLvgl::clipping(int32_t &x, int32_t &y, int32_t &w, int32_t &h)
     return true;
 }
 
-void CanvasLvgl::FillRectangle(int32_t x0, int32_t y0,
+void CanvasLvgl::drawFillRectangle(int32_t x0, int32_t y0,
                                int32_t w, int32_t h,
                                uint16_t color)
 {
@@ -146,7 +146,7 @@ void CanvasLvgl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16
             ++dlen;
             if ((err -= dy) < 0)
             {
-                FillRectangle(y0, xs, 1, dlen, color);
+                drawFillRectangle(y0, xs, 1, dlen, color);
                 err += dx;
                 xs = x0 + 1;
                 dlen = 0;
@@ -156,7 +156,7 @@ void CanvasLvgl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16
             }
         } while (++x0 <= xend);
         if (dlen)
-            FillRectangle(y0, xs, 1, dlen, color);
+            drawFillRectangle(y0, xs, 1, dlen, color);
     }
     else
     {
@@ -165,7 +165,7 @@ void CanvasLvgl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16
             ++dlen;
             if ((err -= dy) < 0)
             {
-                FillRectangle(xs, y0, dlen, 1, color);
+                drawFillRectangle(xs, y0, dlen, 1, color);
                 err += dx;
                 xs = x0 + 1;
                 dlen = 0;
@@ -175,10 +175,10 @@ void CanvasLvgl::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint16
             }
         } while (++x0 <= xend);
         if (dlen)
-            FillRectangle(xs, y0, dlen, 1, color);
+            drawFillRectangle(xs, y0, dlen, 1, color);
     }
 }
-void CanvasLvgl::FillTriangle(int32_t x0, int32_t y0,
+void CanvasLvgl::drawFillTriangle(int32_t x0, int32_t y0,
                               int32_t x1, int32_t y1,
                               int32_t x2, int32_t y2,
                               uint16_t color)
@@ -347,7 +347,7 @@ void CanvasLvgl::drawFastHLine(int32_t x, int32_t y, int32_t w,
         w = cr;
     if (w < 1)
         return;
-    FillRectangle(x, y, w, 1, color);
+    drawFillRectangle(x, y, w, 1, color);
 }
 
 void CanvasLvgl::clear(uint16_t color)
@@ -359,7 +359,7 @@ void CanvasLvgl::clear(uint16_t color)
         Serial.println("clear failed ");
         return;
     }
-    FillRectangle(0, 0, w, h, 0);
+    drawFillRectangle(0, 0, w, h, 0);
 }
 void CanvasLvgl::push(int x, int y)
 {
