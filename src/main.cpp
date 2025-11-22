@@ -16,8 +16,11 @@
 #include "Services/mjpeg_player.h"
 
 #include "Drivers/Display/ScreenDriver.h"
-
-
+#include "Drivers/Display/CanvasLvgl.h"
+#include "Drivers/Display/CanvasLGFX.h"
+#include "Drivers/Display/CanvasManagerLvgl.h"
+#include "Drivers/Display/CanvasManagerLGFX.h"
+#include "Face.h"
 
 /*mjpeg & SD Card*/
 #define MJPEG_FILENAME "/video/splash.mjpeg"
@@ -32,9 +35,7 @@ static int displayBack(JPEGDRAW *pDraw);
 MjpegPlayer *videoPlayer;
 AudioPlayer *audioPlayer;
 
-
 // Audio audio;
-
 
 static int displayBack(JPEGDRAW *pDraw)
 {
@@ -67,9 +68,12 @@ void fsInit()
 	Serial.println("File system initialized.");
 }
 
+ICanvasManager *canvasManager = new CanvasManagerLGFX();
+Face *face;
+ICanvas *canvas;
+
 void setup()
 {
-	delay(2000);
 	Serial.begin(115200);
 
 	// Version Arduino Core
@@ -79,23 +83,21 @@ void setup()
 	// ESP-IDF Version
 	Serial.print("ESP-IDF Version: ");
 	Serial.println(esp_get_idf_version());
-	fsInit();
+	
 	Screen.begin();
-	main_view_init();
-	// int id = Screen.createSprite(120, 120, 1);
-	// canvas = new CanvasImpl(&Screen, id);
-	// int id = canvasManager->createCanvas(120, 120);
-    // if (id == -1 ) {
-    //     Serial.println("Create canvas failed");
-    //     return;
-    // }
-    // canvas = new CanvasLvImpl(canvasManager, id);
-	// canvas->push(60,60);
-	// face = new Face(canvas, 60, 240, 240, BLACK, YELLOW);
-	// auto panel = Screen.getPanel();
-	// panel->setTextColor(RED);
-	// panel->setFont(&Font4);
-	// panel->drawString("Hello", 60, 0);
+
+
+	int id = canvasManager->createCanvas(240, 240, 1);
+	if (id == -1)
+	{
+		Serial.println("Create canvas failed");
+		return;
+	}
+	canvas = canvasManager->getCanvasWrapper(id);
+	if (canvas)
+	{
+		face = new Face(canvas, 50, 240, 240, BLACK, YELLOW);
+	}
 	// videoPlayer = new MjpegPlayer(displayBack, false, 0, 0, TFT_HOR_RES, TFT_VER_RES);
 	// audioPlayer = new AudioPlayer();
 	// videoPlayer->begin(1);
@@ -103,11 +105,11 @@ void setup()
 	// videoPlayer->setOnPlayDoneCallback(onVideoPlayDone);
 	// videoPlayer->playFile(splash_video_file);
 	// audioPlayer->playFile(splash_audio_file);
-	
 }
 
 void loop()
 {
+	static uint32_t lastCheckHeap = millis();
 	// if (millis() - lastCmd > 30000)
 	// {
 	// 	lastCmd = millis();
@@ -116,5 +118,10 @@ void loop()
 	// 	sprintf(path, "/gif/%d.gif", idx);
 	// 	gif_request_show(path);
 	// }
-	// face->Update();
+	if (millis() - lastCheckHeap >= 1000) {
+		Serial.printf("Free heap %u\n", esp_get_free_heap_size());
+		lastCheckHeap = millis();
+	}
+	face->Update();
+	delay(5);
 }

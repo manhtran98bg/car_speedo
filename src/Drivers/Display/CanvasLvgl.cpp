@@ -359,7 +359,7 @@ void CanvasLvgl::clear(uint16_t color)
         Serial.println("clear failed ");
         return;
     }
-    drawFillRectangle(0, 0, w, h, 0);
+    drawFillRectangle(0, 0, 120, 120, 0);
 }
 void CanvasLvgl::push(int x, int y)
 {

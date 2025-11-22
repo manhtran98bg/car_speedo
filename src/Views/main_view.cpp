@@ -9,8 +9,10 @@
 #include "Drivers/Display/ScreenDriver.h"
 #include "gif_view.h"
 
-#include "Adapter/CanvasLvgl.h"
-#include "Adapter/CanvasManagerLvgl.h"
+#include "Drivers/Display/CanvasLvgl.h"
+#include "Drivers/Display/CanvasLGFX.h"
+#include "Drivers/Display/CanvasManagerLvgl.h"
+#include "Drivers/Display/CanvasManagerLGFX.h"
 #include "Face.h"
 
 // ==== Display driver ==== //
@@ -87,9 +89,7 @@ static void updateData_task(void *param)
         vTaskDelay(200);
     }
 }
-ICanvasManager *canvasManager = new CanvasManagerLvgl();
-Face *face;
-ICanvas *canvas;
+
 static void mainUi_task(void *param)
 {
     while (true)
@@ -99,7 +99,7 @@ static void mainUi_task(void *param)
             if (xSemaphoreTake(displayMutex, 0) == pdTRUE)
             {
                 lv_timer_handler();
-                face->Update();
+                
                 xSemaphoreGive(displayMutex);
             }
         }
@@ -116,16 +116,7 @@ static void updateFaceTask(void *param)
 }
 static void test_canvas()
 {
-    int id = canvasManager->createCanvas(160, 160, (int)LV_IMG_CF_INDEXED_1BIT);
-    if (id == -1 ) {
-        Serial.println("Create canvas failed");
-        return;
-    }
-    canvas = canvasManager->getCanvasWrapper(id);
-    if (canvas) {
-        face = new Face(canvas, 50, 240, 240, BLACK, YELLOW);
-        xTaskCreate(updateFaceTask, "updateFaceTask", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
-    }
+
 }
 
 
@@ -142,8 +133,8 @@ void main_view_init()
     disp_drv.full_refresh = true;
     lv_disp_drv_register(&disp_drv);
 
-    ui_init();
-    test_canvas();
+    // ui_init();
+    // test_canvas();
     // gif_view_init();
     // lv_disp_set_bg_color(lv_disp_get_default(), PALETTE_RED);
     // lv_draw_rect_dsc_t rect_dsc;

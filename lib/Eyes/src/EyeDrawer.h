@@ -231,22 +231,17 @@ public:
     int32_t b = max(y0, y1);
     int32_t w = r - l;
     int32_t h = b - t;
-    // uint16_t fillColor = (color == 0) ? BLACK : RED;
-    canvas->FillRectangle(l, t, w, h, (uint16_t) color);
+    canvas->drawFillRectangle(l, t, w, h, (uint16_t) color);
   }
 
   static void FillRectangularTriangle(ICanvas* canvas, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t color)
   {
-    // Screen.fillTriangle(x0, y0, x1, y1, x1, y0, color);
-    // uint16_t fillColor = (color == 0) ? BLACK : RED;
-    canvas->FillTriangle(x0, y0, x1, y1, x1, y0, color);
+    canvas->drawFillTriangle(x0, y0, x1, y1, x1, y0, color);
   }
 
   static void FillTriangle(ICanvas* canvas, int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t color)
   {
-
-    // Screen.fillTriangle(x0, y0, x1, y1, x2, y2, color);
-    canvas->FillTriangle(x0, y0, x1, y1, x2, y2, color);
+    canvas->drawFillTriangle(x0, y0, x1, y1, x2, y2, color);
   }
 };
 

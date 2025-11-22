@@ -1,6 +1,7 @@
 #ifndef COMMON_h
 #define COMMON_h
 
-#include "Adapter/ICanvas.h"
+#include "ICanvas.h"
+#include "ICanvasManager.h"
 
 #endif
